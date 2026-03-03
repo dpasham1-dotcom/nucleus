@@ -1,0 +1,178 @@
+{
+  "identity": {
+    "name": "Nucleus",
+    "persona": "The Anti-AI Designer",
+    "aesthetic": "Old Money Tech / Dark Academia SaaS",
+    "core_concept": "Rooms in a House",
+    "emotional_tone": "Warm, Focused, Academic, Premium, Organized"
+  },
+  "typography": {
+    "fonts": {
+      "heading": {
+        "family": "Playfair Display",
+        "weights": ["400", "600", "700"],
+        "usage": "H1, H2, H3, Module Titles, Big Stats"
+      },
+      "body": {
+        "family": "DM Sans",
+        "weights": ["400", "500", "700"],
+        "usage": "Paragraphs, UI Labels, Inputs, Buttons"
+      }
+    },
+    "rules": [
+      "Headings must use Playfair Display. Do not use Inter.",
+      "Body text must use DM Sans. Do not use Inter.",
+      "Use tight tracking (-0.02em) for Headings.",
+      "Use relaxed leading (1.6) for Body text."
+    ]
+  },
+  "colors": {
+    "global_accent": "#C9A96E",
+    "modules": {
+      "dashboard": {
+        "bg": "#FAF7F2",
+        "accent": "#C9A96E",
+        "text": "#1C1917",
+        "name": "Warm Ivory"
+      },
+      "habit_tracker": {
+        "bg": "#F4F6F1",
+        "accent": "#7C9A6E",
+        "streak": "#D97706",
+        "missed": "#F5D0C8",
+        "name": "Sage White"
+      },
+      "daily_planner": {
+        "bg": "#F0EDE8",
+        "sidebar": "#2C3E2D",
+        "accent": "#B8860B",
+        "name": "Aged Parchment"
+      },
+      "link_vault": {
+        "bg": "#F2F4F8",
+        "accent": "#C17A3D",
+        "name": "Cool Blue-White"
+      },
+      "vocabulary": {
+        "bg": "#FBF5ED",
+        "accent": "#8A3D2C",
+        "text": "#2C1810",
+        "name": "Candlelight Ivory"
+      },
+      "ideas_notepad": {
+        "bg": "#FAFAFA",
+        "accent": "#F59E0B",
+        "name": "Pure White"
+      },
+      "bq_practice": {
+        "bg": "#1C1917",
+        "accent": "#C9A96E",
+        "text": "#FAF7F2",
+        "name": "Deep Charcoal (Dark Mode)"
+      },
+      "calorie_tracker": {
+        "bg": "#F0FAF5",
+        "accent": "#2D9A6A",
+        "name": "Fresh Mint White"
+      }
+    },
+    "surface_strategies": {
+      "cards": "bg-white/50 backdrop-blur-sm border border-white/20 shadow-[0_2px_12px_rgba(0,0,0,0.06)]",
+      "sidebar": "border-r border-border/10 bg-white/50 backdrop-blur-md",
+      "dark_module_cards": "bg-white/5 border border-white/10 shadow-none"
+    }
+  },
+  "layout": {
+    "grid_system": {
+      "dashboard": "Bento Grid (Grid Cols 1 md:4 lg:6)",
+      "habit_tracker": "10x9 Heatmap Grid",
+      "standard": "Masonry or Card Grid"
+    },
+    "structure": {
+      "desktop": "Fixed Left Sidebar (w-64)",
+      "mobile": "Fixed Bottom Tab Bar (h-16)",
+      "container": "max-w-7xl mx-auto p-4 md:p-8"
+    },
+    "spacing": {
+      "page_padding": "p-6 md:p-12",
+      "card_padding": "p-6",
+      "gap": "gap-6"
+    }
+  },
+  "components": {
+    "buttons": {
+      "base": "rounded-full font-medium transition-all duration-200 active:scale-95",
+      "primary": "bg-[var(--module-accent)] text-white hover:brightness-110 shadow-md",
+      "secondary": "bg-white border border-input hover:bg-accent hover:text-accent-foreground",
+      "ghost": "hover:bg-black/5"
+    },
+    "cards": {
+      "base": "rounded-xl border border-black/5 bg-white/60 backdrop-blur-sm shadow-[0_2px_12px_rgba(0,0,0,0.06)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.08)] transition-all duration-300",
+      "dark": "bg-white/5 border-white/10 text-white"
+    },
+    "inputs": {
+      "base": "rounded-lg border-black/10 bg-white/50 focus:bg-white focus:ring-2 focus:ring-[var(--module-accent)]/20 transition-all font-body"
+    }
+  },
+  "visual_enhancers": {
+    "textures": [
+      "Subtle grain overlay (opacity-30) on all backgrounds to mimic paper",
+      "Noise texture on Dark Module (BQ Practice)"
+    ],
+    "shadows": {
+      "soft": "0 2px 12px rgba(0,0,0,0.06)",
+      "lifted": "0 10px 40px -10px rgba(0,0,0,0.08)"
+    },
+    "radius": {
+      "default": "12px",
+      "small": "8px",
+      "full": "9999px"
+    }
+  },
+  "motion": {
+    "page_transition": {
+      "initial": { "opacity": 0, "y": 20 },
+      "animate": { "opacity": 1, "y": 0 },
+      "exit": { "opacity": 0, "y": -20 },
+      "transition": { "duration": 0.4, "ease": [0.22, 1, 0.36, 1] }
+    },
+    "micro_interactions": {
+      "hover": "scale-[1.02]",
+      "tap": "scale-[0.98]",
+      "list_item": "stagger(0.05)"
+    }
+  },
+  "assets": {
+    "icons": {
+      "library": "lucide-react",
+      "style": "Stroke width 1.5px, rounded caps"
+    },
+    "images": {
+      "login_hero": "https://images.unsplash.com/photo-1580501170854-a66ac9b17e94?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzNDR8MHwxfHNlYXJjaHw0fHxtaW5pbWFsaXN0JTIwYWVzdGhldGljJTIwc3R1ZHklMjBkZXNrJTIwdW5pdmVyc2l0eSUyMGxpYnJhcnl8ZW58MHx8fHwxNzcyNTcyNzE1fDA&ixlib=rb-4.1.0&q=85",
+      "empty_state_library": "https://images.unsplash.com/photo-1634044060889-7e8fcf0e415c?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzNDR8MHwxfHNlYXJjaHwyfHxtaW5pbWFsaXN0JTIwYWVzdGhldGljJTIwc3R1ZHklMjBkZXNrJTIwdW5pdmVyc2l0eSUyMGxpYnJhcnl8ZW58MHx8fHwxNzcyNTcyNzE1fDA&ixlib=rb-4.1.0&q=85",
+      "bookshelf": "https://images.unsplash.com/photo-1642130935796-1409d7e075dd?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzNDR8MHwxfHNlYXJjaHwxfHxtaW5pbWFsaXN0JTIwYWVzdGhldGljJTIwc3R1ZHklMjBkZXNrJTIwdW5pdmVyc2l0eSUyMGxpYnJhcnl8ZW58MHx8fHwxNzcyNTcyNzE1fDA&ixlib=rb-4.1.0&q=85"
+    }
+  },
+  "instructions_to_main_agent": [
+    "CRITICAL: Implement a 'ThemeWrapper' component that listens to the current route and updates CSS variables for --bg-color, --accent-color, etc.",
+    "Do NOT use generic shadcn cards. Heavily style them to match the 'Old Money Tech' aesthetic (border-black/5, warm white bg).",
+    "Habit Tracker Grid must be 10x9. It is the core visual.",
+    "BQ Practice module must be DARK MODE (#1C1917 bg). All other modules are Light/Warm.",
+    "Use Playfair Display for ALL headings. Import it via Google Fonts in index.css.",
+    "Ensure the gold accent (#C9A96E) is present in every module as a unifying thread (e.g., active tab, primary button, progress bar).",
+    "For the Landing Page, use the 'login_hero' image with a clean, centered login box.",
+    "Install 'framer-motion' for page transitions.",
+    "Use 'sonner' for toasts.",
+    "Do NOT ask the user for clarification. Use these guidelines as the source of truth."
+  ],
+  "universal_guidelines": [
+    "Avoid generic 'AI slop' aesthetics (standard centered layouts, default blue/purple gradients).",
+    "Dark colors look good when used independently without gradients.",
+    "Create depth through layered design elements with z-index hierarchy.",
+    "Use glass-morphism effects with backdrop filters (12-24px blur).",
+    "Every interaction needs micro-animations.",
+    "Use 2-3x more spacing than feels comfortable.",
+    "Subtle grain textures separates good from extraordinary.",
+    "All interactive elements MUST include data-testid."
+  ]
+}

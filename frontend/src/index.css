@@ -1,0 +1,218 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Global Gold Accent */
+  --gold-accent: #C9A96E;
+  
+  /* Dashboard - Warm Ivory */
+  --dashboard-bg: #FAF7F2;
+  --dashboard-accent: #C9A96E;
+  --dashboard-text: #1C1917;
+  --dashboard-text-secondary: #78716C;
+  --dashboard-border: #E8E0D5;
+  
+  /* Habit Tracker - Sage White */
+  --habit-bg: #F4F6F1;
+  --habit-accent: #7C9A6E;
+  --habit-streak: #D97706;
+  --habit-missed: #F5D0C8;
+  --habit-empty: #EBE8E3;
+  --habit-text: #2D3520;
+  
+  /* Daily Planner - Aged Parchment */
+  --planner-bg: #F0EDE8;
+  --planner-sidebar: #2C3E2D;
+  --planner-accent: #B8860B;
+  --planner-deep-work: #2C3E2D;
+  --planner-admin: #8A7A6A;
+  --planner-learning: #5C7A9A;
+  --planner-personal: #9A7A9A;
+  --planner-pomodoro: #C1714A;
+  
+  /* Link Vault - Cool Blue-White */
+  --vault-bg: #F2F4F8;
+  --vault-accent: #C17A3D;
+  --vault-job: #1E3A5F;
+  --vault-article: #2D5016;
+  --vault-resource: #5C3D7A;
+  --vault-tool: #3D5A7A;
+  --vault-inspiration: #8A3D2C;
+  --vault-watch: #7A6A3D;
+  
+  /* Vocabulary - Candlelight Ivory */
+  --vocab-bg: #FBF5ED;
+  --vocab-accent: #8A3D2C;
+  --vocab-text: #2C1810;
+  --vocab-new: #C1714A;
+  --vocab-familiar: #C9A96E;
+  --vocab-owned: #2D5016;
+  
+  /* Ideas Notepad - Pure White */
+  --ideas-bg: #FAFAFA;
+  --ideas-accent: #F59E0B;
+  --ideas-raw: #FFF8F0;
+  --ideas-exploring: #F0F4FF;
+  --ideas-progress: #F0FFF4;
+  --ideas-shipped: #F5F0FF;
+  --ideas-archived: #F5F5F5;
+  
+  /* BQ Practice - Deep Charcoal (Dark) */
+  --bq-bg: #1C1917;
+  --bq-card: #2C2420;
+  --bq-accent: #C9A96E;
+  --bq-text: #FAF7F2;
+  --bq-situation: #5C7A9A;
+  --bq-task: #7C9A6E;
+  --bq-action: #C9A96E;
+  --bq-result: #C1714A;
+  
+  /* Calorie Tracker - Fresh Mint */
+  --calorie-bg: #F0FAF5;
+  --calorie-accent: #2D9A6A;
+  
+  /* Current module variables (set by ThemeWrapper) */
+  --module-bg: #FAF7F2;
+  --module-accent: #C9A96E;
+  --module-text: #1C1917;
+}
+
+body {
+  margin: 0;
+  font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--module-bg);
+  color: var(--module-text);
+}
+
+h1, h2, h3, h4, h5, h6, .heading {
+  font-family: 'Playfair Display', serif;
+  letter-spacing: -0.02em;
+}
+
+.font-heading {
+  font-family: 'Playfair Display', serif;
+}
+
+.font-body {
+  font-family: 'DM Sans', sans-serif;
+}
+
+/* Grain texture overlay */
+.grain-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  opacity: 0.03;
+  z-index: 9999;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+/* Card styling */
+.nucleus-card {
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  transition: all 0.2s ease;
+}
+
+.nucleus-card:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+/* Dark card for BQ Practice */
+.nucleus-card-dark {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+}
+
+/* Pulsing animation for today's habit square */
+@keyframes pulse-border {
+  0%, 100% {
+    box-shadow: 0 0 0 2px var(--gold-accent);
+  }
+  50% {
+    box-shadow: 0 0 0 4px var(--gold-accent), 0 0 12px rgba(201, 169, 110, 0.4);
+  }
+}
+
+.habit-today {
+  animation: pulse-border 2s ease-in-out infinite;
+}
+
+/* Button transitions */
+.nucleus-btn {
+  transition: all 0.2s ease;
+}
+
+.nucleus-btn:active {
+  transform: scale(0.95);
+}
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 0 0% 3.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 3.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 3.9%;
+    --primary: 39 47% 55%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 0 0% 96.1%;
+    --secondary-foreground: 0 0% 9%;
+    --muted: 0 0% 96.1%;
+    --muted-foreground: 0 0% 45.1%;
+    --accent: 0 0% 96.1%;
+    --accent-foreground: 0 0% 9%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 89.8%;
+    --input: 0 0% 89.8%;
+    --ring: 39 47% 55%;
+    --chart-1: 12 76% 61%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
+    --radius: 0.75rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
