@@ -2,11 +2,11 @@ import { useState, useEffect } from "react";
 import { useAuth, API } from "@/App";
 import axios from "axios";
 import { motion } from "framer-motion";
-import { 
-  Plus, 
-  Link2, 
-  ExternalLink, 
-  Archive, 
+import {
+  Plus,
+  Link2,
+  ExternalLink,
+  Archive,
   Search,
   Filter,
   Briefcase,
@@ -76,6 +76,7 @@ const LinkVault = () => {
     tags: []
   });
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     fetchLinks();
   }, [filterCategory, filterStatus]);
@@ -87,7 +88,7 @@ const LinkVault = () => {
       if (filterCategory !== "all") params.append("category", filterCategory);
       if (filterStatus !== "all") params.append("status", filterStatus);
       if (params.toString()) url += `?${params.toString()}`;
-      
+
       const response = await axios.get(url, { withCredentials: true });
       setLinks(response.data);
     } catch (error) {
@@ -138,16 +139,16 @@ const LinkVault = () => {
   };
 
   const handleBulkArchive = async () => {
-    const oldLinks = links.filter(l => l.status === "saved" && 
+    const oldLinks = links.filter(l => l.status === "saved" &&
       new Date(l.created_at) < new Date(Date.now() - 30 * 24 * 60 * 60 * 1000));
-    
+
     if (oldLinks.length === 0) {
       toast.info("No old links to archive");
       return;
     }
 
     try {
-      await axios.post(`${API}/links/bulk-archive`, 
+      await axios.post(`${API}/links/bulk-archive`,
         { link_ids: oldLinks.map(l => l.link_id) },
         { withCredentials: true }
       );
@@ -162,8 +163,8 @@ const LinkVault = () => {
     if (!searchQuery) return true;
     const query = searchQuery.toLowerCase();
     return link.title.toLowerCase().includes(query) ||
-           link.url.toLowerCase().includes(query) ||
-           (link.note && link.note.toLowerCase().includes(query));
+      link.url.toLowerCase().includes(query) ||
+      (link.note && link.note.toLowerCase().includes(query));
   });
 
   const getCategoryIcon = (categoryId) => {
@@ -190,7 +191,7 @@ const LinkVault = () => {
   return (
     <div data-testid="link-vault-page" className="p-6 md:p-12 max-w-7xl mx-auto"
       style={{ backgroundColor: 'var(--vault-bg)', minHeight: '100vh' }}>
-      
+
       {/* Header */}
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -334,7 +335,7 @@ const LinkVault = () => {
         {filteredLinks.map((link) => {
           const CategoryIcon = getCategoryIcon(link.category);
           const categoryColor = getCategoryColor(link.category);
-          
+
           return (
             <motion.div key={link.link_id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
               <Card className="nucleus-card border-0 h-full group">
@@ -366,15 +367,14 @@ const LinkVault = () => {
                       <ExternalLink className="w-4 h-4" />
                     </a>
                   </div>
-                  
+
                   <div className="flex items-center justify-between mt-4 pt-3 border-t border-black/5">
                     <div className="flex gap-1">
                       {STATUSES.filter(s => s.id !== "archived").map((status) => (
                         <button key={status.id}
                           onClick={() => handleUpdateStatus(link.link_id, status.id)}
-                          className={`px-2 py-1 rounded text-xs transition-all ${
-                            link.status === status.id ? 'text-white' : 'opacity-50 hover:opacity-100'
-                          }`}
+                          className={`px-2 py-1 rounded text-xs transition-all ${link.status === status.id ? 'text-white' : 'opacity-50 hover:opacity-100'
+                            }`}
                           style={{ backgroundColor: link.status === status.id ? status.color : 'transparent' }}>
                           {status.label}
                         </button>

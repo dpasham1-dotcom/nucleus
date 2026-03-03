@@ -3,9 +3,9 @@ import { useAuth, API } from "@/App";
 import axios from "axios";
 import { format } from "date-fns";
 import { motion } from "framer-motion";
-import { 
-  Plus, 
-  Sparkles, 
+import {
+  Plus,
+  Sparkles,
   UtensilsCrossed,
   Coffee,
   Sun,
@@ -55,6 +55,7 @@ const CalorieTracker = () => {
 
   const dateStr = format(selectedDate, "yyyy-MM-dd");
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     fetchDayData();
   }, [dateStr]);
@@ -80,7 +81,7 @@ const CalorieTracker = () => {
     }
 
     try {
-      const response = await axios.post(`${API}/calories`, 
+      const response = await axios.post(`${API}/calories`,
         { ...newLog, date: dateStr },
         { withCredentials: true }
       );
@@ -88,7 +89,7 @@ const CalorieTracker = () => {
       setCreateDialogOpen(false);
       setNewLog({ description: "", meal_type: "meal" });
       fetchDayData();
-      
+
       // Auto-trigger AI estimation
       handleEstimate(response.data.log_id);
     } catch (error) {
@@ -141,7 +142,7 @@ const CalorieTracker = () => {
   return (
     <div data-testid="calorie-tracker-page" className="p-6 md:p-12 max-w-7xl mx-auto"
       style={{ backgroundColor: 'var(--calorie-bg)', minHeight: '100vh' }}>
-      
+
       {/* Header */}
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -229,7 +230,7 @@ const CalorieTracker = () => {
                 <Progress value={Math.min(calorieProgress, 100)} className="h-3"
                   style={{ '--progress-color': 'var(--calorie-accent)' }} />
               </div>
-              
+
               {/* Macros */}
               <div className="grid grid-cols-3 gap-4">
                 <div className="text-center p-3 rounded-xl" style={{ backgroundColor: '#E8F5E9' }}>
@@ -286,7 +287,7 @@ const CalorieTracker = () => {
                 logs.map((log) => {
                   const MealIcon = getMealIcon(log.meal_type);
                   const hasEstimate = log.calories !== null;
-                  
+
                   return (
                     <div key={log.log_id}
                       className="p-4 rounded-xl bg-white/50 group" data-testid={`meal-log-${log.log_id}`}>
@@ -299,7 +300,7 @@ const CalorieTracker = () => {
                           <p className="font-body" style={{ color: 'var(--dashboard-text)' }}>
                             {log.description}
                           </p>
-                          
+
                           {hasEstimate ? (
                             <div className="flex flex-wrap gap-4 mt-2">
                               <span className="text-sm font-medium" style={{ color: 'var(--calorie-accent)' }}>
@@ -321,7 +322,7 @@ const CalorieTracker = () => {
                               )}
                             </Button>
                           )}
-                          
+
                           {log.ai_analysis && (
                             <p className="text-xs mt-2 opacity-60 italic">{log.ai_analysis}</p>
                           )}

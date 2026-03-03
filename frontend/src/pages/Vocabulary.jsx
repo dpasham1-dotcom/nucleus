@@ -2,9 +2,9 @@ import { useState, useEffect } from "react";
 import { useAuth, API } from "@/App";
 import axios from "axios";
 import { motion } from "framer-motion";
-import { 
-  Plus, 
-  Sparkles, 
+import {
+  Plus,
+  Sparkles,
   BookOpen,
   Search,
   Check,
@@ -52,6 +52,7 @@ const Vocabulary = () => {
     tags: []
   });
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     fetchWords();
     fetchWordOfDay();
@@ -91,7 +92,7 @@ const Vocabulary = () => {
       setCreateDialogOpen(false);
       setNewWord({ word: "", definition: "", example_sentence: "", source_context: "", tags: [] });
       fetchWords();
-      
+
       // Auto-generate if no definition provided
       if (!newWord.definition) {
         handleGenerate(response.data.word_id);
@@ -147,7 +148,7 @@ const Vocabulary = () => {
     if (!searchQuery) return true;
     const query = searchQuery.toLowerCase();
     return word.word.toLowerCase().includes(query) ||
-           (word.definition && word.definition.toLowerCase().includes(query));
+      (word.definition && word.definition.toLowerCase().includes(query));
   });
 
   const getMasteryColor = (level) => {
@@ -167,7 +168,7 @@ const Vocabulary = () => {
   return (
     <div data-testid="vocabulary-page" className="p-6 md:p-12 max-w-7xl mx-auto"
       style={{ backgroundColor: 'var(--vocab-bg)', minHeight: '100vh' }}>
-      
+
       {/* Header */}
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -282,7 +283,7 @@ const Vocabulary = () => {
                     {word.mastery_level}
                   </Badge>
                 </div>
-                
+
                 {word.definition ? (
                   <p className="text-sm font-body mt-2 line-clamp-2" style={{ color: 'var(--vocab-text)', opacity: 0.8 }}>
                     {word.definition}
@@ -348,7 +349,7 @@ const Vocabulary = () => {
                     <p className="font-body mt-1">{selectedWord.usage_tips}</p>
                   </div>
                 )}
-                
+
                 <div className="pt-4 border-t border-black/5">
                   <Label className="text-xs uppercase tracking-wide opacity-60 block mb-2">Mastery Level</Label>
                   <div className="flex gap-2">

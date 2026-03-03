@@ -3,13 +3,13 @@ import { useAuth, API } from "@/App";
 import axios from "axios";
 import { format, addDays, subDays } from "date-fns";
 import { motion } from "framer-motion";
-import { 
-  Plus, 
-  ChevronLeft, 
-  ChevronRight, 
-  Clock, 
-  Play, 
-  Pause, 
+import {
+  Plus,
+  ChevronLeft,
+  ChevronRight,
+  Clock,
+  Play,
+  Pause,
   RotateCcw,
   Target,
   Trash2,
@@ -63,6 +63,7 @@ const DailyPlanner = () => {
 
   const dateStr = format(selectedDate, "yyyy-MM-dd");
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     fetchDayData();
   }, [dateStr]);
@@ -114,12 +115,12 @@ const DailyPlanner = () => {
     }
 
     try {
-      const taskToCreate = { 
-        ...newTask, 
+      const taskToCreate = {
+        ...newTask,
         date: dateStr,
         scheduled_time: newTask.scheduled_time === "none" ? null : newTask.scheduled_time
       };
-      
+
       await axios.post(
         `${API}/tasks`,
         taskToCreate,
@@ -222,7 +223,7 @@ const DailyPlanner = () => {
   if (loading) {
     return (
       <div className="p-6 md:p-12 flex items-center justify-center min-h-[60vh]">
-        <div 
+        <div
           className="w-8 h-8 border-4 border-t-transparent rounded-full animate-spin"
           style={{ borderColor: 'var(--planner-accent)', borderTopColor: 'transparent' }}
         />
@@ -231,7 +232,7 @@ const DailyPlanner = () => {
   }
 
   return (
-    <div 
+    <div
       data-testid="daily-planner-page"
       className="p-6 md:p-12 max-w-7xl mx-auto"
       style={{ backgroundColor: 'var(--planner-bg)', minHeight: '100vh' }}
@@ -244,7 +245,7 @@ const DailyPlanner = () => {
       >
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
-            <h1 
+            <h1
               className="font-heading text-4xl md:text-5xl mb-2"
               style={{ color: 'var(--dashboard-text)' }}
             >
@@ -398,7 +399,7 @@ const DailyPlanner = () => {
               </CardHeader>
               <CardContent>
                 <div className="text-center">
-                  <p 
+                  <p
                     className="font-heading text-5xl mb-4"
                     style={{ color: isBreak ? 'var(--habit-accent)' : 'var(--planner-pomodoro)' }}
                   >
@@ -510,12 +511,12 @@ const DailyPlanner = () => {
             <CardContent>
               <div className="grid grid-cols-2 gap-4">
                 {/* Urgent + Important */}
-                <div 
+                <div
                   className="p-4 rounded-xl min-h-[200px]"
                   style={{ backgroundColor: `${PRIORITY_COLORS["urgent-important"].bg}10` }}
                 >
                   <div className="flex items-center gap-2 mb-3">
-                    <div 
+                    <div
                       className="w-3 h-3 rounded-full"
                       style={{ backgroundColor: PRIORITY_COLORS["urgent-important"].bg }}
                     />
@@ -525,9 +526,9 @@ const DailyPlanner = () => {
                   </div>
                   <div className="space-y-2">
                     {matrixTasks["urgent-important"].map((task) => (
-                      <TaskCard 
-                        key={task.task_id} 
-                        task={task} 
+                      <TaskCard
+                        key={task.task_id}
+                        task={task}
                         onToggle={handleToggleTask}
                         onDelete={handleDeleteTask}
                         onPomodoro={() => {
@@ -540,12 +541,12 @@ const DailyPlanner = () => {
                 </div>
 
                 {/* Important */}
-                <div 
+                <div
                   className="p-4 rounded-xl min-h-[200px]"
                   style={{ backgroundColor: `${PRIORITY_COLORS["important"].bg}10` }}
                 >
                   <div className="flex items-center gap-2 mb-3">
-                    <div 
+                    <div
                       className="w-3 h-3 rounded-full"
                       style={{ backgroundColor: PRIORITY_COLORS["important"].bg }}
                     />
@@ -555,9 +556,9 @@ const DailyPlanner = () => {
                   </div>
                   <div className="space-y-2">
                     {matrixTasks["important"].map((task) => (
-                      <TaskCard 
-                        key={task.task_id} 
-                        task={task} 
+                      <TaskCard
+                        key={task.task_id}
+                        task={task}
                         onToggle={handleToggleTask}
                         onDelete={handleDeleteTask}
                         onPomodoro={() => {
@@ -570,12 +571,12 @@ const DailyPlanner = () => {
                 </div>
 
                 {/* Urgent */}
-                <div 
+                <div
                   className="p-4 rounded-xl min-h-[200px]"
                   style={{ backgroundColor: `${PRIORITY_COLORS["urgent"].bg}10` }}
                 >
                   <div className="flex items-center gap-2 mb-3">
-                    <div 
+                    <div
                       className="w-3 h-3 rounded-full"
                       style={{ backgroundColor: PRIORITY_COLORS["urgent"].bg }}
                     />
@@ -585,9 +586,9 @@ const DailyPlanner = () => {
                   </div>
                   <div className="space-y-2">
                     {matrixTasks["urgent"].map((task) => (
-                      <TaskCard 
-                        key={task.task_id} 
-                        task={task} 
+                      <TaskCard
+                        key={task.task_id}
+                        task={task}
                         onToggle={handleToggleTask}
                         onDelete={handleDeleteTask}
                         onPomodoro={() => {
@@ -600,12 +601,12 @@ const DailyPlanner = () => {
                 </div>
 
                 {/* Neither */}
-                <div 
+                <div
                   className="p-4 rounded-xl min-h-[200px]"
                   style={{ backgroundColor: `${PRIORITY_COLORS["neither"].bg}10` }}
                 >
                   <div className="flex items-center gap-2 mb-3">
-                    <div 
+                    <div
                       className="w-3 h-3 rounded-full"
                       style={{ backgroundColor: PRIORITY_COLORS["neither"].bg }}
                     />
@@ -615,9 +616,9 @@ const DailyPlanner = () => {
                   </div>
                   <div className="space-y-2">
                     {matrixTasks["neither"].map((task) => (
-                      <TaskCard 
-                        key={task.task_id} 
-                        task={task} 
+                      <TaskCard
+                        key={task.task_id}
+                        task={task}
                         onToggle={handleToggleTask}
                         onDelete={handleDeleteTask}
                         onPomodoro={() => {
@@ -638,7 +639,7 @@ const DailyPlanner = () => {
                 <div className="flex gap-2">
                   {Object.entries(PRIORITY_COLORS).map(([key, { bg, label }]) => (
                     <div key={key} className="flex items-center gap-1">
-                      <div 
+                      <div
                         className="w-2 h-2 rounded-full"
                         style={{ backgroundColor: bg }}
                       />
@@ -660,9 +661,8 @@ const DailyPlanner = () => {
 const TaskCard = ({ task, onToggle, onDelete, onPomodoro }) => (
   <div
     data-testid={`task-card-${task.task_id}`}
-    className={`p-3 rounded-lg bg-white/80 backdrop-blur-sm flex items-start gap-3 group transition-all ${
-      task.completed ? 'opacity-60' : ''
-    }`}
+    className={`p-3 rounded-lg bg-white/80 backdrop-blur-sm flex items-start gap-3 group transition-all ${task.completed ? 'opacity-60' : ''
+      }`}
   >
     <Checkbox
       checked={task.completed}
@@ -670,7 +670,7 @@ const TaskCard = ({ task, onToggle, onDelete, onPomodoro }) => (
       className="mt-0.5"
     />
     <div className="flex-1 min-w-0">
-      <p 
+      <p
         className={`text-sm font-body ${task.completed ? 'line-through' : ''}`}
         style={{ color: 'var(--dashboard-text)' }}
       >

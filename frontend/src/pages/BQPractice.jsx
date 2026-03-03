@@ -2,9 +2,9 @@ import { useState, useEffect } from "react";
 import { useAuth, API } from "@/App";
 import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
-  Plus, 
-  Sparkles, 
+import {
+  Plus,
+  Sparkles,
   MessageSquare,
   Play,
   ChevronRight,
@@ -75,6 +75,7 @@ const BQPractice = () => {
   });
   const [newQuestion, setNewQuestion] = useState({ question: "", theme: "general" });
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     fetchData();
   }, [filterTheme]);
@@ -83,12 +84,12 @@ const BQPractice = () => {
     try {
       let qUrl = `${API}/bq/questions`;
       if (filterTheme !== "all") qUrl += `?theme=${filterTheme}`;
-      
+
       const [questionsRes, answersRes] = await Promise.all([
         axios.get(qUrl, { withCredentials: true }),
         axios.get(`${API}/bq/answers`, { withCredentials: true })
       ]);
-      
+
       setQuestions(questionsRes.data);
       setAnswers(answersRes.data);
     } catch (error) {
@@ -127,7 +128,7 @@ const BQPractice = () => {
         question_id: selectedQuestion.question_id,
         question_text: selectedQuestion.question
       }, { withCredentials: true });
-      
+
       toast.success("Answer saved!");
       setAnswerDialogOpen(false);
       setNewAnswer({ situation: "", task: "", action: "", result: "", tags: [] });
@@ -255,7 +256,7 @@ const BQPractice = () => {
   // Practice Session View
   if (practiceSession) {
     const currentQ = practiceSession.questions[practiceSession.currentIndex];
-    
+
     return (
       <div data-testid="bq-practice-session" className="min-h-screen p-8" style={{ backgroundColor: 'var(--bq-bg)' }}>
         <div className="max-w-3xl mx-auto">
@@ -267,13 +268,13 @@ const BQPractice = () => {
               <X className="w-4 h-4" />
             </Button>
           </div>
-          
+
           <Card className="nucleus-card-dark border border-white/10">
             <CardContent className="p-8">
               <h2 className="font-heading text-2xl mb-8" style={{ color: 'var(--bq-text)' }}>
                 {currentQ.question}
               </h2>
-              
+
               <div className="space-y-4">
                 <Label style={{ color: 'var(--bq-text)' }}>How confident are you with this question?</Label>
                 <div className="flex gap-2">
@@ -312,7 +313,7 @@ const BQPractice = () => {
   return (
     <div data-testid="bq-practice-page" className="p-6 md:p-12 max-w-7xl mx-auto min-h-screen"
       style={{ backgroundColor: 'var(--bq-bg)' }}>
-      
+
       {/* Header */}
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -359,7 +360,7 @@ const BQPractice = () => {
             ))}
           </SelectContent>
         </Select>
-        
+
         {activeTab === "questions" && (
           <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
             <DialogTrigger asChild>
@@ -405,7 +406,7 @@ const BQPractice = () => {
           {questions.filter(q => filterTheme === "all" || q.theme === filterTheme).map((question) => {
             const ThemeIcon = getThemeIcon(question.theme);
             const hasAnswer = answers.some(a => a.question_id === question.question_id);
-            
+
             return (
               <motion.div key={question.question_id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
                 <Card className="nucleus-card-dark border border-white/10 h-full">

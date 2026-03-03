@@ -3,11 +3,11 @@ import { useAuth, API } from "@/App";
 import axios from "axios";
 import { format } from "date-fns";
 import { motion } from "framer-motion";
-import { 
-  Sun, 
-  CheckCircle2, 
-  Target, 
-  BookOpen, 
+import {
+  Sun,
+  CheckCircle2,
+  Target,
+  BookOpen,
   Sparkles,
   Link2,
   Lightbulb,
@@ -42,6 +42,7 @@ const Dashboard = () => {
     return "Good evening";
   }
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     fetchDashboardData();
   }, []);
@@ -134,7 +135,7 @@ const Dashboard = () => {
   }
 
   return (
-    <div 
+    <div
       data-testid="dashboard-page"
       className="p-6 md:p-12 max-w-7xl mx-auto"
       style={{ backgroundColor: 'var(--dashboard-bg)', minHeight: '100vh' }}
@@ -152,7 +153,7 @@ const Dashboard = () => {
             {format(new Date(), "EEEE, MMMM d, yyyy")}
           </span>
         </div>
-        <h1 
+        <h1
           className="font-heading text-4xl md:text-5xl"
           style={{ color: 'var(--dashboard-text)' }}
         >
@@ -268,12 +269,12 @@ const Dashboard = () => {
                       checked={habit.completed}
                       onCheckedChange={() => handleToggleHabit(habit)}
                       className="border-2"
-                      style={{ 
+                      style={{
                         borderColor: habit.color,
                         backgroundColor: habit.completed ? habit.color : 'transparent'
                       }}
                     />
-                    <span 
+                    <span
                       className={`font-body ${habit.completed ? 'line-through opacity-60' : ''}`}
                       style={{ color: 'var(--dashboard-text)' }}
                     >
@@ -313,7 +314,7 @@ const Dashboard = () => {
                     className="flex items-center gap-3 p-2 rounded-lg transition-colors hover:bg-black/5 cursor-pointer"
                     onClick={() => handleToggleTask(task)}
                   >
-                    <span 
+                    <span
                       className="w-6 h-6 rounded-full flex items-center justify-center text-sm font-medium text-white"
                       style={{ backgroundColor: 'var(--gold-accent)' }}
                     >
@@ -339,32 +340,32 @@ const Dashboard = () => {
           <Card className="nucleus-card border-0">
             <CardContent className="p-6">
               <div className="grid grid-cols-2 md:grid-cols-5 gap-6">
-                <StatItem 
-                  icon={<Flame className="w-5 h-5" />} 
-                  label="Habit Streak" 
-                  value={stats.habits_streak} 
+                <StatItem
+                  icon={<Flame className="w-5 h-5" />}
+                  label="Habit Streak"
+                  value={stats.habits_streak}
                   suffix="days"
                   highlight
                 />
-                <StatItem 
-                  icon={<Link2 className="w-5 h-5" />} 
-                  label="Links Saved" 
-                  value={stats.links_saved} 
+                <StatItem
+                  icon={<Link2 className="w-5 h-5" />}
+                  label="Links Saved"
+                  value={stats.links_saved}
                 />
-                <StatItem 
-                  icon={<BookOpen className="w-5 h-5" />} 
-                  label="Words Collected" 
-                  value={stats.words_collected} 
+                <StatItem
+                  icon={<BookOpen className="w-5 h-5" />}
+                  label="Words Collected"
+                  value={stats.words_collected}
                 />
-                <StatItem 
-                  icon={<Lightbulb className="w-5 h-5" />} 
-                  label="Ideas Captured" 
-                  value={stats.ideas_captured} 
+                <StatItem
+                  icon={<Lightbulb className="w-5 h-5" />}
+                  label="Ideas Captured"
+                  value={stats.ideas_captured}
                 />
-                <StatItem 
-                  icon={<CheckCircle2 className="w-5 h-5" />} 
-                  label="Tasks Done" 
-                  value={stats.tasks_completed} 
+                <StatItem
+                  icon={<CheckCircle2 className="w-5 h-5" />}
+                  label="Tasks Done"
+                  value={stats.tasks_completed}
                 />
               </div>
             </CardContent>
@@ -377,9 +378,9 @@ const Dashboard = () => {
 
 const StatItem = ({ icon, label, value, suffix, highlight }) => (
   <div className="text-center">
-    <div 
+    <div
       className="w-10 h-10 rounded-full mx-auto mb-2 flex items-center justify-center"
-      style={{ 
+      style={{
         backgroundColor: highlight ? 'var(--gold-accent)' : 'rgba(0,0,0,0.05)',
         color: highlight ? 'white' : 'var(--gold-accent)'
       }}

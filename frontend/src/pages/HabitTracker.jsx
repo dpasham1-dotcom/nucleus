@@ -3,11 +3,11 @@ import { useAuth, API } from "@/App";
 import axios from "axios";
 import { format, subDays, addDays, startOfDay, differenceInDays } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
-  Plus, 
-  Flame, 
-  Snowflake, 
-  Star, 
+import {
+  Plus,
+  Flame,
+  Snowflake,
+  Star,
   Trophy,
   ChevronLeft,
   ChevronRight,
@@ -72,6 +72,7 @@ const HabitTracker = () => {
 
   const today = useMemo(() => format(new Date(), "yyyy-MM-dd"), []);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     fetchHabits();
   }, []);
@@ -152,16 +153,16 @@ const HabitTracker = () => {
     try {
       const response = await axios.post(
         `${API}/habits/${selectedHabit.habit_id}/toggle`,
-        { 
-          date: dateStr, 
-          completed: isFreeze ? false : !isCompleted, 
-          freeze: isFreeze 
+        {
+          date: dateStr,
+          completed: isFreeze ? false : !isCompleted,
+          freeze: isFreeze
         },
         { withCredentials: true }
       );
-      
+
       setSelectedHabit(response.data);
-      setHabits(prev => prev.map(h => 
+      setHabits(prev => prev.map(h =>
         h.habit_id === selectedHabit.habit_id ? response.data : h
       ));
 
@@ -230,7 +231,7 @@ const HabitTracker = () => {
   if (loading) {
     return (
       <div className="p-6 md:p-12 flex items-center justify-center min-h-[60vh]">
-        <div 
+        <div
           className="w-8 h-8 border-4 border-t-transparent rounded-full animate-spin"
           style={{ borderColor: 'var(--habit-accent)', borderTopColor: 'transparent' }}
         />
@@ -239,7 +240,7 @@ const HabitTracker = () => {
   }
 
   return (
-    <div 
+    <div
       data-testid="habit-tracker-page"
       className="p-6 md:p-12 max-w-7xl mx-auto"
       style={{ backgroundColor: 'var(--habit-bg)', minHeight: '100vh' }}
@@ -251,7 +252,7 @@ const HabitTracker = () => {
         className="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4"
       >
         <div>
-          <h1 
+          <h1
             className="font-heading text-4xl md:text-5xl mb-2"
             style={{ color: 'var(--habit-text)' }}
           >
@@ -295,10 +296,9 @@ const HabitTracker = () => {
                     <button
                       key={color.value}
                       onClick={() => setNewHabit({ ...newHabit, color: color.value })}
-                      className={`w-8 h-8 rounded-full transition-all ${
-                        newHabit.color === color.value ? 'ring-2 ring-offset-2 scale-110' : ''
-                      }`}
-                      style={{ 
+                      className={`w-8 h-8 rounded-full transition-all ${newHabit.color === color.value ? 'ring-2 ring-offset-2 scale-110' : ''
+                        }`}
+                      style={{
                         backgroundColor: color.value,
                         ringColor: color.value
                       }}
@@ -370,19 +370,18 @@ const HabitTracker = () => {
                         key={habit.habit_id}
                         data-testid={`habit-select-${habit.habit_id}`}
                         onClick={() => setSelectedHabit(habit)}
-                        className={`w-full p-3 rounded-xl flex items-center gap-3 transition-all ${
-                          selectedHabit?.habit_id === habit.habit_id 
-                            ? 'shadow-md' 
+                        className={`w-full p-3 rounded-xl flex items-center gap-3 transition-all ${selectedHabit?.habit_id === habit.habit_id
+                            ? 'shadow-md'
                             : 'hover:bg-black/5'
-                        }`}
+                          }`}
                         style={{
-                          backgroundColor: selectedHabit?.habit_id === habit.habit_id 
-                            ? `${habit.color}20` 
+                          backgroundColor: selectedHabit?.habit_id === habit.habit_id
+                            ? `${habit.color}20`
                             : 'transparent',
                           borderLeft: `3px solid ${habit.color}`
                         }}
                       >
-                        <div 
+                        <div
                           className="w-4 h-4 rounded-full"
                           style={{ backgroundColor: habit.color }}
                         />
@@ -415,7 +414,7 @@ const HabitTracker = () => {
               <CardHeader className="flex flex-row items-start justify-between">
                 <div>
                   <div className="flex items-center gap-3">
-                    <div 
+                    <div
                       className="w-6 h-6 rounded-full"
                       style={{ backgroundColor: selectedHabit.color }}
                     />
@@ -473,9 +472,9 @@ const HabitTracker = () => {
                           ${isFuture ? 'opacity-30 cursor-not-allowed' : 'hover:scale-105'}
                         `}
                         style={{
-                          backgroundColor: isCompleted 
-                            ? selectedHabit.color 
-                            : isFrozen 
+                          backgroundColor: isCompleted
+                            ? selectedHabit.color
+                            : isFrozen
                               ? '#E8F4FC'
                               : 'var(--habit-empty)',
                           border: isToday ? `2px solid var(--gold-accent)` : 'none'
@@ -483,15 +482,15 @@ const HabitTracker = () => {
                         title={`${format(new Date(dateStr), 'MMM d')}${isFrozen ? ' (Frozen)' : ''}`}
                       >
                         {isFrozen && (
-                          <Snowflake 
-                            className="absolute inset-0 m-auto w-3 h-3 md:w-4 md:h-4" 
-                            style={{ color: '#5C7A9A' }} 
+                          <Snowflake
+                            className="absolute inset-0 m-auto w-3 h-3 md:w-4 md:h-4"
+                            style={{ color: '#5C7A9A' }}
                           />
                         )}
                         {isMilestone && (
-                          <Star 
-                            className="absolute -top-1 -right-1 w-3 h-3" 
-                            style={{ color: 'var(--gold-accent)', fill: 'var(--gold-accent)' }} 
+                          <Star
+                            className="absolute -top-1 -right-1 w-3 h-3"
+                            style={{ color: 'var(--gold-accent)', fill: 'var(--gold-accent)' }}
                           />
                         )}
                       </div>
@@ -502,21 +501,21 @@ const HabitTracker = () => {
                 {/* Legend */}
                 <div className="flex flex-wrap gap-4 mt-6 pt-6 border-t border-black/5">
                   <div className="flex items-center gap-2">
-                    <div 
+                    <div
                       className="w-4 h-4 rounded"
                       style={{ backgroundColor: selectedHabit.color }}
                     />
                     <span className="text-xs font-body" style={{ color: 'var(--habit-text)' }}>Completed</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <div 
+                    <div
                       className="w-4 h-4 rounded"
                       style={{ backgroundColor: 'var(--habit-empty)' }}
                     />
                     <span className="text-xs font-body" style={{ color: 'var(--habit-text)' }}>Empty</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <div 
+                    <div
                       className="w-4 h-4 rounded flex items-center justify-center"
                       style={{ backgroundColor: '#E8F4FC' }}
                     >
@@ -553,7 +552,7 @@ const HabitTracker = () => {
                     <div
                       key={milestone}
                       className="flex items-center gap-2 px-3 py-1 rounded-full text-xs font-body"
-                      style={{ 
+                      style={{
                         backgroundColor: 'var(--gold-accent)',
                         color: 'white'
                       }}
@@ -600,10 +599,9 @@ const HabitTracker = () => {
                     <button
                       key={color.value}
                       onClick={() => setSelectedHabit({ ...selectedHabit, color: color.value })}
-                      className={`w-8 h-8 rounded-full transition-all ${
-                        selectedHabit.color === color.value ? 'ring-2 ring-offset-2 scale-110' : ''
-                      }`}
-                      style={{ 
+                      className={`w-8 h-8 rounded-full transition-all ${selectedHabit.color === color.value ? 'ring-2 ring-offset-2 scale-110' : ''
+                        }`}
+                      style={{
                         backgroundColor: color.value,
                         ringColor: color.value
                       }}

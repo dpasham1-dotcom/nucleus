@@ -2,9 +2,9 @@ import { useState, useEffect } from "react";
 import { useAuth, API } from "@/App";
 import axios from "axios";
 import { motion } from "framer-motion";
-import { 
-  Plus, 
-  Sparkles, 
+import {
+  Plus,
+  Sparkles,
   Lightbulb,
   Star,
   Search,
@@ -64,6 +64,7 @@ const Ideas = () => {
     tags: []
   });
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     fetchIdeas();
     fetchResurfacedIdea();
@@ -154,7 +155,7 @@ const Ideas = () => {
     if (!searchQuery) return true;
     const query = searchQuery.toLowerCase();
     return idea.title.toLowerCase().includes(query) ||
-           (idea.content && idea.content.toLowerCase().includes(query));
+      (idea.content && idea.content.toLowerCase().includes(query));
   });
 
   const getStatusColor = (status) => {
@@ -180,7 +181,7 @@ const Ideas = () => {
   return (
     <div data-testid="ideas-page" className="p-6 md:p-12 max-w-7xl mx-auto"
       style={{ backgroundColor: 'var(--ideas-bg)', minHeight: '100vh' }}>
-      
+
       {/* Header */}
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -200,7 +201,7 @@ const Ideas = () => {
                 <TabsTrigger value="list">List</TabsTrigger>
               </TabsList>
             </Tabs>
-            
+
             <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
               <DialogTrigger asChild>
                 <Button data-testid="create-idea-btn" className="rounded-full px-6 text-white"
@@ -291,7 +292,7 @@ const Ideas = () => {
                 <span className="font-body font-medium text-sm">{column.label}</span>
                 <Badge variant="secondary" className="ml-auto">{column.ideas.length}</Badge>
               </div>
-              
+
               <div className="space-y-3 p-2 rounded-xl min-h-[350px]" style={{ backgroundColor: column.color }}>
                 {column.ideas.map((idea) => (
                   <motion.div key={idea.idea_id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
@@ -318,7 +319,7 @@ const Ideas = () => {
                     </Card>
                   </motion.div>
                 ))}
-                
+
                 {column.ideas.length === 0 && (
                   <p className="text-center text-xs opacity-40 py-8">Drop ideas here</p>
                 )}
