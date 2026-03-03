@@ -437,18 +437,26 @@ async def create_session(request: Request, response: Response):
         raise HTTPException(status_code=401, detail="Invalid session_id")
     
     auth_data = auth_response.json()
+    email = auth_data.get("email")
+    name = auth_data.get("name", "User")
+    
+    if not email:
+        raise HTTPException(status_code=400, detail="Email not provided by auth provider")
     
     existing_user = await db.users.find_one(
-        {"email": auth_data["email"]},
+        {"email": email},
         {"_id": 0}
     )
     
     if existing_user:
-        user_id = existing_user["user_id"]
+        user_id = existing_user.get("user_id")
+        if not user_id:
+            user_id = f"user_{uuid.uuid4().hex[:12]}"
         await db.users.update_one(
-            {"user_id": user_id},
+            {"email": email},
             {"$set": {
-                "name": auth_data["name"],
+                "user_id": user_id,
+                "name": name,
                 "picture": auth_data.get("picture")
             }}
         )
@@ -456,8 +464,8 @@ async def create_session(request: Request, response: Response):
         user_id = f"user_{uuid.uuid4().hex[:12]}"
         user_doc = {
             "user_id": user_id,
-            "email": auth_data["email"],
-            "name": auth_data["name"],
+            "email": email,
+            "name": name,
             "picture": auth_data.get("picture"),
             "created_at": datetime.now(timezone.utc).isoformat()
         }
