@@ -10,7 +10,7 @@ services:
       - key: PYTHON_VERSION
         value: 3.11.0
       - key: MONGO_URL
-        sync: false
+        value: "mongodb+srv://dpasham1_db_user:vPpJKM4pxmKH6sU2@nucleus-db.0ptund6.mongodb.net/?appName=nucleus-db"
       - key: DB_NAME
         value: nucleus_db
       - key: CORS_ORIGINS
