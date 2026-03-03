@@ -27,6 +27,15 @@ import GlobalSearch from "@/components/GlobalSearch";
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
+// Setup axios interceptor for mobile support
+axios.interceptors.request.use((config) => {
+  const token = localStorage.getItem("nucleus_session_token");
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
 // Auth Context
 const AuthContext = createContext(null);
 
@@ -56,6 +65,7 @@ const AuthProvider = ({ children }) => {
       setUser(response.data);
     } catch (error) {
       setUser(null);
+      localStorage.removeItem("nucleus_session_token");
     } finally {
       setLoading(false);
     }
@@ -75,6 +85,7 @@ const AuthProvider = ({ children }) => {
     } catch (error) {
       console.error("Logout error:", error);
     }
+    localStorage.removeItem("nucleus_session_token");
     setUser(null);
   };
 
@@ -168,9 +179,9 @@ const AppLayout = ({ children }) => {
       // Quick Capture: Press /
       if (e.key === '/' && !e.ctrlKey && !e.metaKey && !e.altKey) {
         const activeElement = document.activeElement;
-        const isInput = activeElement?.tagName === 'INPUT' || 
-                       activeElement?.tagName === 'TEXTAREA' ||
-                       activeElement?.isContentEditable;
+        const isInput = activeElement?.tagName === 'INPUT' ||
+          activeElement?.tagName === 'TEXTAREA' ||
+          activeElement?.isContentEditable;
         if (!isInput) {
           e.preventDefault();
           setQuickCaptureOpen(true);
@@ -215,9 +226,9 @@ const AppLayout = ({ children }) => {
       </div>
 
       {/* Quick Capture Modal */}
-      <QuickCapture 
-        open={quickCaptureOpen} 
-        onOpenChange={setQuickCaptureOpen} 
+      <QuickCapture
+        open={quickCaptureOpen}
+        onOpenChange={setQuickCaptureOpen}
       />
 
       {/* Global Search Modal */}
