@@ -64,10 +64,10 @@ const Ideas = () => {
     tags: []
   });
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     fetchIdeas();
     fetchResurfacedIdea();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filterStatus]);
 
   const fetchIdeas = async () => {

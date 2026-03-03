@@ -75,9 +75,9 @@ const BQPractice = () => {
   });
   const [newQuestion, setNewQuestion] = useState({ question: "", theme: "general" });
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filterTheme]);
 
   const fetchData = async () => {

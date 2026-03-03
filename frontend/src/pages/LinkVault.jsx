@@ -76,9 +76,9 @@ const LinkVault = () => {
     tags: []
   });
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     fetchLinks();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filterCategory, filterStatus]);
 
   const fetchLinks = async () => {

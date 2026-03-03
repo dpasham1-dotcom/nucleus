@@ -52,10 +52,10 @@ const Vocabulary = () => {
     tags: []
   });
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     fetchWords();
     fetchWordOfDay();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filterMastery]);
 
   const fetchWords = async () => {

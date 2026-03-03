@@ -72,9 +72,9 @@ const HabitTracker = () => {
 
   const today = useMemo(() => format(new Date(), "yyyy-MM-dd"), []);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     fetchHabits();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchHabits = async () => {
@@ -371,8 +371,8 @@ const HabitTracker = () => {
                         data-testid={`habit-select-${habit.habit_id}`}
                         onClick={() => setSelectedHabit(habit)}
                         className={`w-full p-3 rounded-xl flex items-center gap-3 transition-all ${selectedHabit?.habit_id === habit.habit_id
-                            ? 'shadow-md'
-                            : 'hover:bg-black/5'
+                          ? 'shadow-md'
+                          : 'hover:bg-black/5'
                           }`}
                         style={{
                           backgroundColor: selectedHabit?.habit_id === habit.habit_id

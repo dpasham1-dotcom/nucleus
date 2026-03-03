@@ -63,9 +63,9 @@ const DailyPlanner = () => {
 
   const dateStr = format(selectedDate, "yyyy-MM-dd");
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     fetchDayData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dateStr]);
 
   // Pomodoro Timer
