@@ -86,21 +86,26 @@ class AIService:
         
         # Call AI API
         try:
-            from emergentintegrations.llm.chat import LlmChat, UserMessage
+            from google import genai
             
-            chat = LlmChat(
-                api_key=self.api_key,
-                session_id=f"nucleus_{feature}_{uuid.uuid4().hex[:8]}",
-                system_message=system_prompt or "You are a helpful assistant for a productivity app called Nucleus."
-            ).with_model(self.provider, self.model)
+            client = genai.Client(api_key=self.api_key)
             
-            user_message = UserMessage(text=prompt)
-            response = await chat.send_message(user_message)
+            # Combine system prompt with user prompt since basic generate_content is simpler
+            full_prompt = prompt
+            if system_prompt:
+                full_prompt = f"System: {system_prompt}\n\nUser: {prompt}"
+                
+            response = client.models.generate_content(
+                model=self.model,
+                contents=full_prompt,
+            )
+            
+            response_text = response.text
             
             # Cache the response
-            await self._cache_response(cache_key, prompt, response, feature)
+            await self._cache_response(cache_key, prompt, response_text, feature)
             
-            return response
+            return response_text
         except Exception as e:
             logger.error(f"AI generation error: {e}")
             raise HTTPException(status_code=500, detail=f"AI generation failed: {str(e)}")
