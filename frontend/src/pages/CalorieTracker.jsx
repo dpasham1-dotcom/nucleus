@@ -14,8 +14,10 @@ import {
   Trash2,
   ChevronLeft,
   ChevronRight,
-  Loader2
+  Loader2,
+  TrendingUp
 } from "lucide-react";
+import { LineChart, Line, XAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -43,28 +45,43 @@ const DAILY_GOALS = {
 const CalorieTracker = () => {
   const { user } = useAuth();
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const [logs, setLogs] = useState([]);
-  const [summary, setSummary] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [estimating, setEstimating] = useState(null);
-  const [createDialogOpen, setCreateDialogOpen] = useState(false);
-  const [newLog, setNewLog] = useState({
-    description: "",
-    meal_type: "meal"
-  });
+  const [recentMeals, setRecentMeals] = useState([]);
+  const [weekSummary, setWeekSummary] = useState([]);
+  const [dailyWeight, setDailyWeight] = useState("");
+  const [savingWeight, setSavingWeight] = useState(false);
 
   const dateStr = format(selectedDate, "yyyy-MM-dd");
 
   useEffect(() => {
     fetchDayData();
+    fetchRecentMeals();
+    fetchWeekSummary();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dateStr]);
+
+  const fetchRecentMeals = async () => {
+    try {
+      const response = await axios.get(`${API}/calories/recent-meals`, { withCredentials: true });
+      setRecentMeals(response.data);
+    } catch (e) { console.error(e) }
+  };
+
+  const fetchWeekSummary = async () => {
+    try {
+      const response = await axios.get(`${API}/calories/week-summary`, { withCredentials: true });
+      setWeekSummary(response.data.map(d => ({
+        ...d,
+        displayDate: format(new Date(d.date), "MMM d")
+      })));
+    } catch (e) { console.error(e) }
+  };
 
   const fetchDayData = async () => {
     try {
       const response = await axios.get(`${API}/calories/daily-summary/${dateStr}`, { withCredentials: true });
       setSummary(response.data);
       setLogs(response.data.logs || []);
+      setDailyWeight(response.data.weight ? response.data.weight.toString() : "");
     } catch (error) {
       console.error("Error fetching calorie data:", error);
       setLogs([]);
@@ -184,6 +201,20 @@ const CalorieTracker = () => {
                     value={newLog.description}
                     onChange={(e) => setNewLog({ ...newLog, description: e.target.value })}
                     className="mt-1" rows={3} />
+                  
+                  {recentMeals.length > 0 && (
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      <span className="text-xs font-medium opacity-60 w-full mb-1">Recent Meals:</span>
+                      {recentMeals.slice(0, 5).map(meal => (
+                        <button key={meal._id} onClick={() => setNewLog({ ...newLog, description: meal._id, meal_type: meal.meal_type })}
+                          className="text-xs px-3 py-1.5 rounded-full bg-black/5 hover:bg-black/10 transition-colors text-left max-w-full truncate"
+                        >
+                          {meal._id}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
                   <p className="text-xs mt-1 opacity-60">
                     Be descriptive for better AI estimation
                   </p>
@@ -256,12 +287,67 @@ const CalorieTracker = () => {
                 </div>
               </div>
 
+              {/* Daily Weight Log */}
+              <div className="pt-4 border-t border-black/5 flex items-center justify-between">
+                <div>
+                  <p className="font-heading text-lg" style={{ color: 'var(--dashboard-text)' }}>Daily Weight</p>
+                  <p className="text-xs font-body opacity-60">Track your progress</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Input 
+                    type="number" 
+                    step="0.1" 
+                    placeholder="kg/lbs" 
+                    value={dailyWeight} 
+                    onChange={(e) => setDailyWeight(e.target.value)} 
+                    className="w-24 bg-black/5 border-0 focus-visible:ring-1"
+                  />
+                  <Button size="sm" variant="outline" onClick={async () => {
+                    if(!dailyWeight) return;
+                    setSavingWeight(true);
+                    try {
+                      await axios.post(`${API}/weight`, { date: dateStr, weight: parseFloat(dailyWeight) }, { withCredentials: true });
+                      toast.success("Weight saved");
+                      fetchWeekSummary();
+                    } catch (e) {toast.error("Failed to save weight");}
+                    setSavingWeight(false);
+                  }} disabled={savingWeight || !dailyWeight}>
+                    Save
+                  </Button>
+                </div>
+              </div>
+
               {/* Meals count */}
               <div className="text-center pt-4 border-t border-black/5">
                 <p className="font-heading text-3xl" style={{ color: 'var(--calorie-accent)' }}>
                   {summary?.meals || 0}
                 </p>
                 <p className="text-sm font-body opacity-60">meals logged today</p>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Progress Chart */}
+          <Card className="nucleus-card border-0 mt-6">
+            <CardHeader>
+              <CardTitle className="font-heading text-lg flex items-center gap-2" style={{ color: 'var(--dashboard-text)' }}>
+                <TrendingUp className="w-5 h-5" style={{ color: 'var(--calorie-accent)' }} />
+                7-Day Progress
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="h-[200px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={weekSummary} margin={{ top: 5, right: 5, bottom: 5, left: -20 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
+                    <XAxis dataKey="displayDate" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#9CA3AF' }} />
+                    <Tooltip 
+                      contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                      labelStyle={{ fontWeight: 'bold', color: '#374151' }}
+                    />
+                    <Line type="monotone" dataKey="calories" name="Calories" stroke="var(--calorie-accent)" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+                  </LineChart>
+                </ResponsiveContainer>
               </div>
             </CardContent>
           </Card>

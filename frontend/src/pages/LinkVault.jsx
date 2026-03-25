@@ -10,6 +10,7 @@ import {
   Search,
   Filter,
   Briefcase,
+  Building,
   FileText,
   Wrench,
   Sparkles,
@@ -31,6 +32,7 @@ import { toast } from "sonner";
 
 const CATEGORIES = [
   { id: "job-lead", label: "Job Lead", icon: Briefcase, color: "#1E3A5F" },
+  { id: "career-page", label: "Career Page", icon: Building, color: "#3B6048" },
   { id: "article", label: "Article", icon: FileText, color: "#2D5016" },
   { id: "resource", label: "Resource", icon: Link2, color: "#5C3D7A" },
   { id: "tool", label: "Tool", icon: Wrench, color: "#3D5A7A" },
@@ -261,27 +263,29 @@ const LinkVault = () => {
                       </Select>
                     </div>
                   </div>
-                  {newLink.category === "job-lead" && (
-                    <>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <Label>Company</Label>
-                          <Input value={newLink.company} onChange={(e) => setNewLink({ ...newLink, company: e.target.value })}
-                            className="mt-1" />
-                        </div>
+                  {(newLink.category === "job-lead" || newLink.category === "career-page") && (
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label>Company</Label>
+                        <Input value={newLink.company} onChange={(e) => setNewLink({ ...newLink, company: e.target.value })}
+                          className="mt-1" />
+                      </div>
+                      {newLink.category === "job-lead" && (
                         <div>
                           <Label>Role</Label>
                           <Input value={newLink.role} onChange={(e) => setNewLink({ ...newLink, role: e.target.value })}
                             className="mt-1" />
                         </div>
-                      </div>
-                      <div>
-                        <Label>Application Deadline</Label>
-                        <Input type="date" value={newLink.deadline}
-                          onChange={(e) => setNewLink({ ...newLink, deadline: e.target.value })}
-                          className="mt-1" />
-                      </div>
-                    </>
+                      )}
+                    </div>
+                  )}
+                  {newLink.category === "job-lead" && (
+                    <div>
+                      <Label>Application Deadline</Label>
+                      <Input type="date" value={newLink.deadline}
+                        onChange={(e) => setNewLink({ ...newLink, deadline: e.target.value })}
+                        className="mt-1" />
+                    </div>
                   )}
                   <div>
                     <Label>Note</Label>
@@ -330,64 +334,78 @@ const LinkVault = () => {
         </Select>
       </div>
 
-      {/* Links Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filteredLinks.map((link) => {
-          const CategoryIcon = getCategoryIcon(link.category);
-          const categoryColor = getCategoryColor(link.category);
-
+      {/* Links Grouped by Category */}
+      <div className="space-y-12">
+        {CATEGORIES.map(category => {
+          const linksInCategory = filteredLinks.filter(l => l.category === category.id);
+          if (linksInCategory.length === 0) return null;
           return (
-            <motion.div key={link.link_id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-              <Card className="nucleus-card border-0 h-full group">
-                <CardContent className="p-4">
-                  <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
-                      style={{ backgroundColor: `${categoryColor}20` }}>
-                      <CategoryIcon className="w-5 h-5" style={{ color: categoryColor }} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-body font-medium text-sm truncate" style={{ color: 'var(--dashboard-text)' }}>
-                        {link.title}
-                      </h3>
-                      <a href={link.url} target="_blank" rel="noopener noreferrer"
-                        className="text-xs opacity-60 truncate block hover:opacity-100 transition-opacity">
-                        {link.url}
-                      </a>
-                      {link.category === "job-lead" && link.company && (
-                        <p className="text-xs mt-1" style={{ color: categoryColor }}>
-                          {link.company} {link.role && `• ${link.role}`}
-                        </p>
-                      )}
-                      {link.note && (
-                        <p className="text-xs mt-2 opacity-60 line-clamp-2">{link.note}</p>
-                      )}
-                    </div>
-                    <a href={link.url} target="_blank" rel="noopener noreferrer"
-                      className="opacity-0 group-hover:opacity-100 transition-opacity">
-                      <ExternalLink className="w-4 h-4" />
-                    </a>
-                  </div>
+            <div key={category.id} className="space-y-4">
+              <h2 className="font-heading text-xl flex items-center gap-2" style={{ color: category.color }}>
+                <category.icon className="w-5 h-5" />
+                {category.label}
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {linksInCategory.map((link) => {
+                  const CategoryIcon = getCategoryIcon(link.category);
+                  const categoryColor = getCategoryColor(link.category);
 
-                  <div className="flex items-center justify-between mt-4 pt-3 border-t border-black/5">
-                    <div className="flex gap-1">
-                      {STATUSES.filter(s => s.id !== "archived").map((status) => (
-                        <button key={status.id}
-                          onClick={() => handleUpdateStatus(link.link_id, status.id)}
-                          className={`px-2 py-1 rounded text-xs transition-all ${link.status === status.id ? 'text-white' : 'opacity-50 hover:opacity-100'
-                            }`}
-                          style={{ backgroundColor: link.status === status.id ? status.color : 'transparent' }}>
-                          {status.label}
-                        </button>
-                      ))}
-                    </div>
-                    <button onClick={() => handleDeleteLink(link.link_id)}
-                      className="opacity-0 group-hover:opacity-100 transition-opacity p-1">
-                      <Trash2 className="w-4 h-4 text-red-500" />
-                    </button>
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
+                  return (
+                    <motion.div key={link.link_id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+                      <Card className="nucleus-card border-0 h-full group">
+                        <CardContent className="p-4">
+                          <div className="flex items-start gap-3">
+                            <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
+                              style={{ backgroundColor: `${categoryColor}20` }}>
+                              <CategoryIcon className="w-5 h-5" style={{ color: categoryColor }} />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <h3 className="font-body font-medium text-sm truncate" style={{ color: 'var(--dashboard-text)' }}>
+                                {link.title}
+                              </h3>
+                              <a href={link.url} target="_blank" rel="noopener noreferrer"
+                                className="text-xs opacity-60 truncate block hover:opacity-100 transition-opacity">
+                                {link.url}
+                              </a>
+                              {(link.category === "job-lead" || link.category === "career-page") && link.company && (
+                                <p className="text-xs mt-1" style={{ color: categoryColor }}>
+                                  {link.company} {link.role && `• ${link.role}`}
+                                </p>
+                              )}
+                              {link.note && (
+                                <p className="text-xs mt-2 opacity-60 line-clamp-2">{link.note}</p>
+                              )}
+                            </div>
+                            <a href={link.url} target="_blank" rel="noopener noreferrer"
+                              className="opacity-0 group-hover:opacity-100 transition-opacity">
+                              <ExternalLink className="w-4 h-4" />
+                            </a>
+                          </div>
+
+                          <div className="flex items-center justify-between mt-4 pt-3 border-t border-black/5">
+                            <div className="flex gap-1 overflow-x-auto pb-1 max-w-[80%] whitespace-nowrap hide-scrollbar">
+                              {STATUSES.filter(s => s.id !== "archived").map((status) => (
+                                <button key={status.id}
+                                  onClick={() => handleUpdateStatus(link.link_id, status.id)}
+                                  className={`px-2 py-1 rounded text-xs transition-all ${link.status === status.id ? 'text-white' : 'opacity-50 hover:opacity-100'
+                                    }`}
+                                  style={{ backgroundColor: link.status === status.id ? status.color : 'transparent' }}>
+                                  {status.label}
+                                </button>
+                              ))}
+                            </div>
+                            <button onClick={() => handleDeleteLink(link.link_id)}
+                              className="opacity-0 group-hover:opacity-100 transition-opacity p-1 flex-shrink-0">
+                              <Trash2 className="w-4 h-4 text-red-500" />
+                            </button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </motion.div>
+                  );
+                })}
+              </div>
+            </div>
           );
         })}
       </div>

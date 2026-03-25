@@ -270,12 +270,26 @@ class CalorieLog(BaseModel):
     ai_analysis: Optional[str] = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
+# Daily Weight Models
+class WeightLogCreate(BaseModel):
+    weight: float
+    date: str
+
+class WeightLog(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    weight_id: str = Field(default_factory=lambda: f"weight_{uuid.uuid4().hex[:12]}")
+    user_id: str
+    weight: float
+    date: str
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
 # Vocabulary Models
 class WordCreate(BaseModel):
     word: str
     definition: Optional[str] = None
     example_sentence: Optional[str] = None
     source_context: Optional[str] = None
+    notes: Optional[str] = None
     tags: List[str] = []
 
 class Word(BaseModel):
@@ -287,6 +301,7 @@ class Word(BaseModel):
     example_sentence: Optional[str] = None
     usage_tips: Optional[str] = None
     source_context: Optional[str] = None
+    notes: Optional[str] = None
     tags: List[str] = []
     mastery_level: str = "new"  # new, familiar, owned
     used_in_writing: bool = False
@@ -297,6 +312,7 @@ class WordUpdate(BaseModel):
     definition: Optional[str] = None
     example_sentence: Optional[str] = None
     usage_tips: Optional[str] = None
+    notes: Optional[str] = None
     tags: Optional[List[str]] = None
     mastery_level: Optional[str] = None
     used_in_writing: Optional[bool] = None
@@ -493,6 +509,8 @@ async def create_session(request: Request, response: Response):
     )
     
     user_doc = await db.users.find_one({"user_id": user_id}, {"_id": 0})
+    # Add token to response so frontend can save it in localStorage for mobile support
+    user_doc["session_token"] = session_token
     return user_doc
 
 @api_router.get("/auth/me")
@@ -876,6 +894,9 @@ async def get_daily_calorie_summary(date: str, user: User = Depends(get_current_
         {"_id": 0}
     ).to_list(100)
     
+    weight_log = await db.weight_logs.find_one({"user_id": user.user_id, "date": date}, {"_id": 0})
+    current_weight = weight_log.get("weight") if weight_log else None
+    
     total_calories = sum(l.get("calories", 0) or 0 for l in logs)
     total_protein = sum(l.get("protein", 0) or 0 for l in logs)
     total_carbs = sum(l.get("carbs", 0) or 0 for l in logs)
@@ -888,8 +909,79 @@ async def get_daily_calorie_summary(date: str, user: User = Depends(get_current_
         "total_protein": total_protein,
         "total_carbs": total_carbs,
         "total_fat": total_fat,
-        "logs": logs
+        "logs": logs,
+        "weight": current_weight
     }
+
+@api_router.get("/calories/week-summary")
+async def get_week_summary(user: User = Depends(get_current_user)):
+    today = datetime.now(timezone.utc).date()
+    dates = [(today - timedelta(days=i)).isoformat() for i in range(6, -1, -1)]
+    
+    logs = await db.calorie_logs.find(
+        {"user_id": user.user_id, "date": {"$in": dates}},
+        {"_id": 0}
+    ).to_list(100)
+    
+    weight_logs = await db.weight_logs.find(
+        {"user_id": user.user_id, "date": {"$in": dates}},
+        {"_id": 0}
+    ).to_list(100)
+    
+    weights_by_date = {w["date"]: w["weight"] for w in weight_logs}
+    
+    summary = []
+    for d in dates:
+        day_logs = [l for l in logs if l.get("date") == d]
+        cals = sum(l.get("calories", 0) or 0 for l in day_logs)
+        summary.append({
+            "date": d,
+            "calories": cals,
+            "weight": weights_by_date.get(d)
+        })
+    
+    return summary
+
+@api_router.get("/calories/recent-meals")
+async def get_recent_meals(user: User = Depends(get_current_user)):
+    # Find unique meal descriptions
+    pipeline = [
+        {"$match": {"user_id": user.user_id}},
+        {"$sort": {"created_at": -1}},
+        {"$group": {
+            "_id": "$description",
+            "meal_type": {"$first": "$meal_type"},
+            "calories": {"$first": "$calories"},
+            "protein": {"$first": "$protein"},
+            "carbs": {"$first": "$carbs"},
+            "fat": {"$first": "$fat"},
+            "last_eaten": {"$first": "$date"}
+        }},
+        {"$sort": {"last_eaten": -1}},
+        {"$limit": 50}
+    ]
+    recent_meals = await db.calorie_logs.aggregate(pipeline).to_list(100)
+    return recent_meals
+
+@api_router.post("/weight", response_model=WeightLog)
+async def create_or_update_weight_log(log_data: WeightLogCreate, user: User = Depends(get_current_user)):
+    log_dict = log_data.model_dump()
+    result = await db.weight_logs.update_one(
+        {"user_id": user.user_id, "date": log_dict["date"]},
+        {"$set": {"weight": log_dict["weight"], "updated_at": datetime.now(timezone.utc).isoformat()}}
+    )
+    if result.matched_count == 0:
+        log = WeightLog(user_id=user.user_id, **log_dict)
+        doc = log.model_dump()
+        doc["created_at"] = doc["created_at"].isoformat()
+        await db.weight_logs.insert_one(doc)
+    
+    updated_log = await db.weight_logs.find_one(
+        {"user_id": user.user_id, "date": log_dict["date"]}, 
+        {"_id": 0}
+    )
+    return WeightLog(**updated_log) 
+
 
 # ==================== VOCABULARY ROUTES ====================
 

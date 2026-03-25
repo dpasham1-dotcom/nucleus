@@ -436,14 +436,25 @@ const HabitTracker = () => {
                 </div>
 
                 {/* Streak Counter */}
-                <div className="flex items-center gap-2 px-4 py-2 rounded-full" style={{ backgroundColor: `${selectedHabit.color}20` }}>
-                  <Flame className="w-6 h-6" style={{ color: 'var(--habit-streak)' }} />
-                  <span className="font-heading text-2xl" style={{ color: 'var(--habit-text)' }}>
-                    {currentStreak}
-                  </span>
-                  <span className="text-sm font-body" style={{ color: 'var(--habit-text)', opacity: 0.6 }}>
-                    day streak
-                  </span>
+                <div className="flex flex-col items-end gap-2">
+                  <div className="flex items-center gap-2 px-4 py-2 rounded-full" style={{ backgroundColor: `${selectedHabit.color}20` }}>
+                    <Flame className="w-6 h-6" style={{ color: 'var(--habit-streak)' }} />
+                    <span className="font-heading text-2xl" style={{ color: 'var(--habit-text)' }}>
+                      {currentStreak}
+                    </span>
+                    <span className="text-sm font-body" style={{ color: 'var(--habit-text)', opacity: 0.6 }}>
+                      day streak
+                    </span>
+                  </div>
+                  <Button 
+                    size="sm"
+                    variant={selectedHabit.completions?.includes(today) ? "outline" : "default"}
+                    onClick={() => handleToggleDay(today)}
+                    style={!selectedHabit.completions?.includes(today) ? { backgroundColor: selectedHabit.color, color: 'white', border: 'none' } : {}}
+                    className="rounded-full w-full"
+                  >
+                    {selectedHabit.completions?.includes(today) ? "Completed Today ✓" : "Complete Today"}
+                  </Button>
                 </div>
               </CardHeader>
 

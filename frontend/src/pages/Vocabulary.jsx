@@ -11,7 +11,8 @@ import {
   MessageSquare,
   Trash2,
   Star,
-  Loader2
+  Loader2,
+  Volume2
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -49,6 +50,7 @@ const Vocabulary = () => {
     definition: "",
     example_sentence: "",
     source_context: "",
+    notes: "",
     tags: []
   });
 
@@ -90,7 +92,7 @@ const Vocabulary = () => {
       const response = await axios.post(`${API}/vocabulary`, newWord, { withCredentials: true });
       toast.success("Word added!");
       setCreateDialogOpen(false);
-      setNewWord({ word: "", definition: "", example_sentence: "", source_context: "", tags: [] });
+      setNewWord({ word: "", definition: "", example_sentence: "", source_context: "", notes: "", tags: [] });
       fetchWords();
 
       // Auto-generate if no definition provided
@@ -141,6 +143,16 @@ const Vocabulary = () => {
       toast.success("Word deleted");
     } catch (error) {
       toast.error("Failed to delete word");
+    }
+  };
+
+  const playVoice = (text, e) => {
+    e?.stopPropagation();
+    if ('speechSynthesis' in window) {
+      const utterance = new SpeechSynthesisUtterance(text);
+      window.speechSynthesis.speak(utterance);
+    } else {
+      toast.error("Text-to-speech not supported in this browser");
     }
   };
 
@@ -217,6 +229,12 @@ const Vocabulary = () => {
                     value={newWord.source_context} onChange={(e) => setNewWord({ ...newWord, source_context: e.target.value })}
                     className="mt-1" />
                 </div>
+                <div>
+                  <Label>Notes (what did you learn?)</Label>
+                  <Textarea placeholder="Any thoughts on this word..."
+                    value={newWord.notes} onChange={(e) => setNewWord({ ...newWord, notes: e.target.value })}
+                    className="mt-1" />
+                </div>
                 <Button data-testid="save-word-btn" onClick={handleCreateWord}
                   className="w-full rounded-full text-white" style={{ backgroundColor: 'var(--vocab-accent)' }}>
                   {newWord.definition ? "Save Word" : <><Sparkles className="w-4 h-4 mr-2" /> Save & Generate Definition</>}
@@ -276,9 +294,14 @@ const Vocabulary = () => {
               style={{ borderLeftColor: getMasteryColor(word.mastery_level) }}>
               <CardContent className="p-4">
                 <div className="flex items-start justify-between">
-                  <h3 className="font-heading text-lg" style={{ color: 'var(--vocab-text)' }}>
-                    {word.word}
-                  </h3>
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-heading text-lg" style={{ color: 'var(--vocab-text)' }}>
+                      {word.word}
+                    </h3>
+                    <button onClick={(e) => playVoice(word.word, e)} className="p-1 rounded-full hover:bg-black/5 opacity-50 hover:opacity-100 transition-all">
+                      <Volume2 className="w-4 h-4 text-gray-700" />
+                    </button>
+                  </div>
                   <Badge variant="outline" style={{ borderColor: getMasteryColor(word.mastery_level), color: getMasteryColor(word.mastery_level) }}>
                     {word.mastery_level}
                   </Badge>
@@ -328,7 +351,12 @@ const Vocabulary = () => {
           {selectedWord && (
             <>
               <DialogHeader>
-                <DialogTitle className="font-heading text-2xl">{selectedWord.word}</DialogTitle>
+                <div className="flex items-center gap-2">
+                  <DialogTitle className="font-heading text-2xl">{selectedWord.word}</DialogTitle>
+                  <button onClick={() => playVoice(selectedWord.word)} className="p-1 rounded-full hover:bg-black/5 opacity-50 hover:opacity-100 transition-all">
+                    <Volume2 className="w-5 h-5 text-gray-700" />
+                  </button>
+                </div>
               </DialogHeader>
               <div className="space-y-4 mt-4">
                 {selectedWord.definition && (
@@ -347,6 +375,12 @@ const Vocabulary = () => {
                   <div>
                     <Label className="text-xs uppercase tracking-wide opacity-60">Usage Tips</Label>
                     <p className="font-body mt-1">{selectedWord.usage_tips}</p>
+                  </div>
+                )}
+                {selectedWord.notes && (
+                  <div>
+                    <Label className="text-xs uppercase tracking-wide opacity-60">Notes</Label>
+                    <p className="font-body mt-1">{selectedWord.notes}</p>
                   </div>
                 )}
 
