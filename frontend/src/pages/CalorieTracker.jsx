@@ -17,7 +17,7 @@ import {
   Loader2,
   TrendingUp
 } from "lucide-react";
-import { LineChart, Line, XAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -62,17 +62,21 @@ const CalorieTracker = () => {
   const fetchRecentMeals = async () => {
     try {
       const response = await axios.get(`${API}/calories/recent-meals`, { withCredentials: true });
-      setRecentMeals(response.data);
+      if (Array.isArray(response.data)) {
+        setRecentMeals(response.data);
+      }
     } catch (e) { console.error(e) }
   };
 
   const fetchWeekSummary = async () => {
     try {
       const response = await axios.get(`${API}/calories/week-summary`, { withCredentials: true });
-      setWeekSummary(response.data.map(d => ({
-        ...d,
-        displayDate: format(new Date(d.date), "MMM d")
-      })));
+      if (Array.isArray(response.data)) {
+        setWeekSummary(response.data.map(d => ({
+          ...d,
+          displayDate: format(new Date(d.date), "MMM d")
+        })));
+      }
     } catch (e) { console.error(e) }
   };
 
@@ -202,7 +206,7 @@ const CalorieTracker = () => {
                     onChange={(e) => setNewLog({ ...newLog, description: e.target.value })}
                     className="mt-1" rows={3} />
                   
-                  {recentMeals.length > 0 && (
+                  {Array.isArray(recentMeals) && recentMeals.length > 0 && (
                     <div className="mt-2 flex flex-wrap gap-2">
                       <span className="text-xs font-medium opacity-60 w-full mb-1">Recent Meals:</span>
                       {recentMeals.slice(0, 5).map(meal => (
@@ -338,9 +342,10 @@ const CalorieTracker = () => {
             <CardContent>
               <div className="h-[200px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={weekSummary} margin={{ top: 5, right: 5, bottom: 5, left: -20 }}>
+                  <LineChart data={Array.isArray(weekSummary) ? weekSummary : []} margin={{ top: 5, right: 5, bottom: 5, left: -20 }}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
                     <XAxis dataKey="displayDate" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#9CA3AF' }} />
+                    <YAxis hide domain={['dataMin', 'dataMax']} />
                     <Tooltip 
                       contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                       labelStyle={{ fontWeight: 'bold', color: '#374151' }}
