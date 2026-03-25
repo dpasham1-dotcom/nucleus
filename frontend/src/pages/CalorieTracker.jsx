@@ -331,8 +331,9 @@ const CalorieTracker = () => {
             </CardContent>
           </Card>
 
+        <div className="w-full">
           {/* Progress Chart */}
-          <Card className="nucleus-card border-0 mt-6">
+          <Card className="nucleus-card border-0 mt-6 overflow-hidden">
             <CardHeader>
               <CardTitle className="font-heading text-lg flex items-center gap-2" style={{ color: 'var(--dashboard-text)' }}>
                 <TrendingUp className="w-5 h-5" style={{ color: 'var(--calorie-accent)' }} />
@@ -340,12 +341,12 @@ const CalorieTracker = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="h-[200px] w-full">
+              <div className="h-[200px]" style={{ width: '99%' }}>
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={Array.isArray(weekSummary) ? weekSummary : []} margin={{ top: 5, right: 5, bottom: 5, left: -20 }}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
                     <XAxis dataKey="displayDate" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#9CA3AF' }} />
-                    <YAxis hide domain={['dataMin', 'dataMax']} />
+                    <YAxis hide />
                     <Tooltip 
                       contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                       labelStyle={{ fontWeight: 'bold', color: '#374151' }}
@@ -356,6 +357,7 @@ const CalorieTracker = () => {
               </div>
             </CardContent>
           </Card>
+        </div>
         </motion.div>
 
         {/* Meal Logs */}
