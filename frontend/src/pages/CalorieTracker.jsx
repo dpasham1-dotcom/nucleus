@@ -17,7 +17,6 @@ import {
   Loader2,
   TrendingUp
 } from "lucide-react";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -341,19 +340,29 @@ const CalorieTracker = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="h-[200px]" style={{ width: '99%' }}>
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={Array.isArray(weekSummary) ? weekSummary : []} margin={{ top: 5, right: 5, bottom: 5, left: -20 }}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
-                    <XAxis dataKey="displayDate" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#9CA3AF' }} />
-                    <YAxis hide />
-                    <Tooltip 
-                      contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                      labelStyle={{ fontWeight: 'bold', color: '#374151' }}
-                    />
-                    <Line type="monotone" dataKey="calories" name="Calories" stroke="var(--calorie-accent)" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
-                  </LineChart>
-                </ResponsiveContainer>
+              <div className="h-[200px] w-full flex items-end justify-between gap-2 pt-8 text-xs font-body" style={{ color: 'var(--dashboard-text)' }}>
+                {Array.isArray(weekSummary) && weekSummary.map((day, i) => {
+                  // Find max calories to scale the bars relative to 100%
+                  const maxCal = Math.max(...weekSummary.map(d => d.calories || 10), 2000);
+                  const heightPercent = Math.min(((day.calories || 0) / maxCal) * 100, 100);
+                  
+                  return (
+                    <div key={i} className="flex flex-col items-center flex-1 h-full justify-end gap-2 group">
+                      <div className="w-full relative flex items-end justify-center h-full rounded-t-sm" style={{ backgroundColor: 'var(--dashboard-bg)' }}>
+                        {/* Custom tooltip on hover */}
+                        <div className="absolute -top-8 bg-black text-white px-2 py-1 rounded text-[10px] opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10 pointer-events-none">
+                          {day.calories} kcal
+                        </div>
+                        {/* The actual filled bar */}
+                        <div 
+                          className="w-full rounded-t-sm transition-all duration-500 ease-out" 
+                          style={{ height: `${heightPercent}%`, backgroundColor: 'var(--calorie-accent)' }} 
+                        />
+                      </div>
+                      <span className="opacity-60">{day.displayDate?.split(' ')[1]}</span>
+                    </div>
+                  );
+                })}
               </div>
             </CardContent>
           </Card>
