@@ -1678,6 +1678,202 @@ async def get_stats(user: User = Depends(get_current_user)):
         "links_saved": link_count
     }
 
+# ==================== ACTIVITY FEED ====================
+
+@api_router.get("/activity-feed")
+async def get_activity_feed(limit: int = 20, user: User = Depends(get_current_user)):
+    """Get recent activity across all modules"""
+    activities = []
+    
+    # Recent habit completions
+    habits = await db.habits.find({"user_id": user.user_id}, {"_id": 0}).to_list(100)
+    today = datetime.now(timezone.utc).date()
+    for habit in habits:
+        for comp_date in sorted(habit.get("completions", []), reverse=True)[:3]:
+            activities.append({
+                "type": "habit",
+                "action": "completed",
+                "title": habit["name"],
+                "date": comp_date,
+                "icon": "check-circle",
+                "color": habit.get("color", "#7C9A6E")
+            })
+    
+    # Recent tasks
+    recent_tasks = await db.tasks.find(
+        {"user_id": user.user_id, "completed": True},
+        {"_id": 0}
+    ).sort("created_at", -1).to_list(5)
+    for task in recent_tasks:
+        created = task.get("created_at", "")
+        if isinstance(created, datetime):
+            created = created.isoformat()
+        activities.append({
+            "type": "task",
+            "action": "completed",
+            "title": task["title"],
+            "date": task.get("date", str(today)),
+            "icon": "check-square",
+            "color": "#C9A96E"
+        })
+    
+    # Recent calorie logs
+    recent_cals = await db.calorie_logs.find(
+        {"user_id": user.user_id},
+        {"_id": 0}
+    ).sort("created_at", -1).to_list(5)
+    for cal in recent_cals:
+        activities.append({
+            "type": "calories",
+            "action": "logged",
+            "title": cal["description"],
+            "subtitle": f"{cal.get('calories', '?')} kcal" if cal.get('calories') else None,
+            "date": cal.get("date", str(today)),
+            "icon": "utensils",
+            "color": "#4CAF50"
+        })
+    
+    # Recent links
+    recent_links = await db.links.find(
+        {"user_id": user.user_id},
+        {"_id": 0}
+    ).sort("created_at", -1).to_list(5)
+    for link in recent_links:
+        created = link.get("created_at", "")
+        if isinstance(created, datetime):
+            created = created.date().isoformat()
+        elif isinstance(created, str) and len(created) > 10:
+            created = created[:10]
+        activities.append({
+            "type": "link",
+            "action": "saved",
+            "title": link["title"],
+            "subtitle": link.get("category"),
+            "date": created or str(today),
+            "icon": "link",
+            "color": "#2196F3"
+        })
+    
+    # Recent vocabulary
+    recent_words = await db.vocabulary.find(
+        {"user_id": user.user_id},
+        {"_id": 0}
+    ).sort("created_at", -1).to_list(5)
+    for word in recent_words:
+        created = word.get("created_at", "")
+        if isinstance(created, datetime):
+            created = created.date().isoformat()
+        elif isinstance(created, str) and len(created) > 10:
+            created = created[:10]
+        activities.append({
+            "type": "vocabulary",
+            "action": "added",
+            "title": word["word"],
+            "subtitle": word.get("definition", "")[:60] if word.get("definition") else None,
+            "date": created or str(today),
+            "icon": "book-open",
+            "color": "#9C27B0"
+        })
+    
+    # Recent ideas
+    recent_ideas = await db.ideas.find(
+        {"user_id": user.user_id},
+        {"_id": 0}
+    ).sort("created_at", -1).to_list(5)
+    for idea in recent_ideas:
+        created = idea.get("created_at", "")
+        if isinstance(created, datetime):
+            created = created.date().isoformat()
+        elif isinstance(created, str) and len(created) > 10:
+            created = created[:10]
+        activities.append({
+            "type": "idea",
+            "action": "captured",
+            "title": idea["title"],
+            "date": created or str(today),
+            "icon": "lightbulb",
+            "color": "#FF9800"
+        })
+    
+    # Sort by date descending
+    activities.sort(key=lambda x: x.get("date", ""), reverse=True)
+    
+    return activities[:limit]
+
+# ==================== DASHBOARD SUMMARY ====================
+
+@api_router.get("/dashboard-summary")
+async def get_dashboard_summary(user: User = Depends(get_current_user)):
+    """Get comprehensive dashboard summary for the home page"""
+    today = datetime.now(timezone.utc).date().isoformat()
+    
+    # Habits summary
+    habits = await db.habits.find({"user_id": user.user_id}, {"_id": 0}).to_list(100)
+    habits_completed_today = sum(1 for h in habits if today in h.get("completions", []))
+    
+    # Tasks summary
+    today_tasks = await db.tasks.find({"user_id": user.user_id, "date": today}, {"_id": 0}).to_list(100)
+    tasks_completed_today = sum(1 for t in today_tasks if t.get("completed"))
+    
+    # Calorie summary for today
+    today_cals = await db.calorie_logs.find({"user_id": user.user_id, "date": today}, {"_id": 0}).to_list(100)
+    total_calories_today = sum(c.get("calories", 0) or 0 for c in today_cals)
+    
+    # Links count
+    link_count = await db.links.count_documents({"user_id": user.user_id})
+    
+    # Vocab count
+    word_count = await db.vocabulary.count_documents({"user_id": user.user_id})
+    
+    # Ideas count
+    idea_count = await db.ideas.count_documents({"user_id": user.user_id})
+    
+    # BQ answers count
+    bq_count = await db.star_answers.count_documents({"user_id": user.user_id})
+    
+    return {
+        "modules": {
+            "habits": {
+                "total": len(habits),
+                "completed_today": habits_completed_today,
+                "label": "Habits",
+                "gradient": ["#7C9A6E", "#A8C99B"]
+            },
+            "tasks": {
+                "total": len(today_tasks),
+                "completed_today": tasks_completed_today,
+                "label": "Tasks Today",
+                "gradient": ["#C9A96E", "#E8D5A3"]
+            },
+            "calories": {
+                "total_today": total_calories_today,
+                "meals_today": len(today_cals),
+                "label": "Calories",
+                "gradient": ["#4CAF50", "#81C784"]
+            },
+            "links": {
+                "total": link_count,
+                "label": "Links Saved",
+                "gradient": ["#2196F3", "#64B5F6"]
+            },
+            "vocabulary": {
+                "total": word_count,
+                "label": "Words",
+                "gradient": ["#9C27B0", "#CE93D8"]
+            },
+            "ideas": {
+                "total": idea_count,
+                "label": "Ideas",
+                "gradient": ["#FF9800", "#FFB74D"]
+            },
+            "bq_practice": {
+                "total": bq_count,
+                "label": "BQ Answers",
+                "gradient": ["#607D8B", "#90A4AE"]
+            }
+        }
+    }
+
 # ==================== ROOT ROUTE ====================
 
 @api_router.get("/")

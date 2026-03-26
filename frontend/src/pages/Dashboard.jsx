@@ -1,65 +1,114 @@
 import { useState, useEffect } from "react";
 import { useAuth, API } from "@/App";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { format } from "date-fns";
 import { motion } from "framer-motion";
 import {
   Sun,
+  Moon,
+  Sunset,
   CheckCircle2,
   Target,
   BookOpen,
   Sparkles,
   Link2,
   Lightbulb,
-  Flame
+  Flame,
+  UtensilsCrossed,
+  MessageSquare,
+  Calendar,
+  Plus,
+  ArrowRight,
+  TrendingUp,
+  Zap,
+  Activity,
+  ChevronRight
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+
+const QUOTES = [
+  "The secret of getting ahead is getting started.",
+  "Small daily improvements lead to stunning results.",
+  "What you do today can improve all your tomorrows.",
+  "Focus on being productive instead of busy.",
+  "Success is the sum of small efforts repeated daily.",
+  "Don't watch the clock; do what it does. Keep going.",
+  "The only way to do great work is to love what you do.",
+  "Your future self will thank you for the work you put in today.",
+  "Discipline is choosing between what you want now and what you want most.",
+  "Progress, not perfection."
+];
+
+const MODULE_CONFIGS = {
+  habits: { icon: Target, path: "/habits", label: "Habits" },
+  tasks: { icon: Calendar, path: "/planner", label: "Planner" },
+  calories: { icon: UtensilsCrossed, path: "/calories", label: "Calories" },
+  links: { icon: Link2, path: "/links", label: "Link Vault" },
+  vocabulary: { icon: BookOpen, path: "/vocabulary", label: "Vocabulary" },
+  ideas: { icon: Lightbulb, path: "/ideas", label: "Ideas" },
+  bq_practice: { icon: MessageSquare, path: "/bq-practice", label: "BQ Practice" }
+};
+
+const ACTIVITY_ICONS = {
+  "check-circle": CheckCircle2,
+  "check-square": CheckCircle2,
+  "utensils": UtensilsCrossed,
+  "link": Link2,
+  "book-open": BookOpen,
+  "lightbulb": Lightbulb
+};
 
 const Dashboard = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [intention, setIntention] = useState("");
   const [habits, setHabits] = useState([]);
   const [tasks, setTasks] = useState([]);
-  const [stats, setStats] = useState({
-    habits_streak: 0,
-    tasks_completed: 0,
-    ideas_captured: 0,
-    words_collected: 0,
-    links_saved: 0
-  });
+  const [summary, setSummary] = useState(null);
+  const [activities, setActivities] = useState([]);
+  const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [quote] = useState(() => QUOTES[Math.floor(Math.random() * QUOTES.length)]);
 
   const today = format(new Date(), "yyyy-MM-dd");
-  const greeting = getGreeting();
 
   function getGreeting() {
     const hour = new Date().getHours();
-    if (hour < 12) return "Good morning";
-    if (hour < 17) return "Good afternoon";
-    return "Good evening";
+    if (hour < 12) return { text: "Good morning", icon: Sun };
+    if (hour < 17) return { text: "Good afternoon", icon: Sunset };
+    return { text: "Good evening", icon: Moon };
   }
 
+  const greeting = getGreeting();
+  const GreetingIcon = greeting.icon;
+
   useEffect(() => {
-    fetchDashboardData();
+    fetchAllData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const fetchDashboardData = async () => {
+  const fetchAllData = async () => {
     try {
-      const [habitsRes, tasksRes, intentionRes, statsRes] = await Promise.all([
+      const [habitsRes, tasksRes, intentionRes, statsRes, summaryRes, activityRes] = await Promise.all([
         axios.get(`${API}/habits`, { withCredentials: true }),
         axios.get(`${API}/tasks?date=${today}`, { withCredentials: true }),
         axios.get(`${API}/intention/${today}`, { withCredentials: true }),
-        axios.get(`${API}/stats`, { withCredentials: true })
+        axios.get(`${API}/stats`, { withCredentials: true }),
+        axios.get(`${API}/dashboard-summary`, { withCredentials: true }).catch(() => ({ data: null })),
+        axios.get(`${API}/activity-feed?limit=10`, { withCredentials: true }).catch(() => ({ data: [] }))
       ]);
 
       setHabits(habitsRes.data);
       setTasks(tasksRes.data);
       setIntention(intentionRes.data.intention || "");
       setStats(statsRes.data);
+      setSummary(summaryRes.data);
+      setActivities(activityRes.data || []);
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
     } finally {
@@ -75,8 +124,8 @@ const Dashboard = () => {
         { date: today, completed: !isCompleted, freeze: false },
         { withCredentials: true }
       );
-      fetchDashboardData();
-      toast.success(isCompleted ? "Habit unchecked" : "Habit completed!");
+      fetchAllData();
+      toast.success(isCompleted ? "Habit unchecked" : "Habit completed! 🎉");
     } catch (error) {
       toast.error("Failed to update habit");
     }
@@ -89,8 +138,8 @@ const Dashboard = () => {
         { completed: !task.completed },
         { withCredentials: true }
       );
-      fetchDashboardData();
-      toast.success(task.completed ? "Task marked incomplete" : "Task completed!");
+      fetchAllData();
+      toast.success(task.completed ? "Task reopened" : "Task completed! ✅");
     } catch (error) {
       toast.error("Failed to update task");
     }
@@ -109,7 +158,6 @@ const Dashboard = () => {
     }
   };
 
-  // Calculate habit completion for today
   const todayHabits = habits.map(h => ({
     ...h,
     completed: h.completions?.includes(today) || false
@@ -117,19 +165,24 @@ const Dashboard = () => {
   const completedHabits = todayHabits.filter(h => h.completed).length;
   const habitProgress = habits.length > 0 ? (completedHabits / habits.length) * 100 : 0;
 
-  // Get top 3 priority tasks
   const priorityTasks = tasks
     .filter(t => !t.completed)
     .sort((a, b) => {
       const priorityOrder = { "urgent-important": 0, "important": 1, "urgent": 2, "medium": 3, "neither": 4 };
       return (priorityOrder[a.priority] || 3) - (priorityOrder[b.priority] || 3);
     })
-    .slice(0, 3);
+    .slice(0, 5);
+
+  const completedTasks = tasks.filter(t => t.completed).length;
 
   if (loading) {
     return (
       <div className="p-6 md:p-12 flex items-center justify-center min-h-[60vh]">
-        <div className="w-8 h-8 border-4 border-[var(--gold-accent)] border-t-transparent rounded-full animate-spin"></div>
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-t-transparent rounded-full animate-spin mx-auto mb-4"
+            style={{ borderColor: 'var(--gold-accent)', borderTopColor: 'transparent' }} />
+          <p className="font-body text-sm opacity-60">Loading your command center...</p>
+        </div>
       </div>
     );
   }
@@ -140,237 +193,422 @@ const Dashboard = () => {
       className="p-6 md:p-12 max-w-7xl mx-auto"
       style={{ backgroundColor: 'var(--dashboard-bg)', minHeight: '100vh' }}
     >
-      {/* Header */}
+      {/* Hero Header */}
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="mb-8"
+        transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+        className="mb-10"
       >
-        <div className="flex items-center gap-3 mb-2">
-          <Sun className="w-6 h-6" style={{ color: 'var(--gold-accent)' }} />
-          <span className="text-sm font-body" style={{ color: 'var(--dashboard-text-secondary)' }}>
+        <div className="flex items-center gap-2 mb-3">
+          <GreetingIcon className="w-5 h-5" style={{ color: 'var(--gold-accent)' }} />
+          <span className="text-sm font-body" style={{ color: 'var(--dashboard-text)', opacity: 0.5 }}>
             {format(new Date(), "EEEE, MMMM d, yyyy")}
           </span>
         </div>
         <h1
-          className="font-heading text-4xl md:text-5xl"
+          className="font-heading text-4xl md:text-5xl lg:text-6xl mb-3"
           style={{ color: 'var(--dashboard-text)' }}
         >
-          {greeting}, {user?.name?.split(' ')[0]}
+          {greeting.text}, {user?.name?.split(' ')[0]}
         </h1>
+        <p className="font-body text-base md:text-lg italic" style={{ color: 'var(--dashboard-text)', opacity: 0.4 }}>
+          "{quote}"
+        </p>
       </motion.div>
 
-      {/* Bento Grid Layout */}
-      <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-6 gap-6">
-        {/* Daily Intention - Spans 2 columns */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.1 }}
-          className="md:col-span-2 lg:col-span-3"
-        >
-          <Card className="nucleus-card h-full border-0">
-            <CardHeader className="pb-3">
-              <CardTitle className="font-heading text-lg flex items-center gap-2" style={{ color: 'var(--dashboard-text)' }}>
-                <Target className="w-5 h-5" style={{ color: 'var(--gold-accent)' }} />
-                Daily Intention
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Input
-                data-testid="daily-intention-input"
-                placeholder="Today I want to..."
-                value={intention}
-                onChange={(e) => handleIntentionChange(e.target.value)}
-                className="border-0 bg-transparent text-lg font-body placeholder:opacity-40 focus-visible:ring-0 p-0"
-                style={{ color: 'var(--dashboard-text)' }}
-              />
-            </CardContent>
-          </Card>
-        </motion.div>
+      {/* Daily Intention */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.1 }}
+        className="mb-8"
+      >
+        <Card className="nucleus-card border-0 overflow-hidden" style={{ position: 'relative' }}>
+          <div style={{
+            position: 'absolute', top: 0, left: 0, right: 0, height: '3px',
+            background: 'linear-gradient(90deg, var(--gold-accent), #E8D5A3, var(--gold-accent))'
+          }} />
+          <CardContent className="p-6">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-8 h-8 rounded-full flex items-center justify-center"
+                style={{ backgroundColor: 'var(--gold-accent)15' }}>
+                <Target className="w-4 h-4" style={{ color: 'var(--gold-accent)' }} />
+              </div>
+              <span className="font-heading text-sm tracking-wider uppercase" style={{ color: 'var(--gold-accent)' }}>
+                Today's Intention
+              </span>
+            </div>
+            <Input
+              data-testid="daily-intention-input"
+              placeholder="What's your main focus for today?"
+              value={intention}
+              onChange={(e) => handleIntentionChange(e.target.value)}
+              className="border-0 bg-transparent text-xl font-body placeholder:opacity-30 focus-visible:ring-0 p-0"
+              style={{ color: 'var(--dashboard-text)' }}
+            />
+          </CardContent>
+        </Card>
+      </motion.div>
 
-        {/* Habit Progress Ring - Spans 1 column */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.15 }}
-          className="md:col-span-2 lg:col-span-3"
-        >
-          <Card className="nucleus-card h-full border-0">
-            <CardContent className="p-6 flex items-center gap-6">
-              {/* Progress Ring */}
-              <div className="relative w-20 h-20 flex-shrink-0">
-                <svg className="w-20 h-20 transform -rotate-90">
-                  <circle
-                    cx="40"
-                    cy="40"
-                    r="34"
-                    stroke="#EBE8E3"
-                    strokeWidth="8"
-                    fill="none"
-                  />
-                  <circle
-                    cx="40"
-                    cy="40"
-                    r="34"
-                    stroke="var(--gold-accent)"
-                    strokeWidth="8"
-                    fill="none"
-                    strokeLinecap="round"
-                    strokeDasharray={`${habitProgress * 2.136} 213.6`}
-                    className="transition-all duration-500"
-                  />
-                </svg>
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="font-heading text-xl" style={{ color: 'var(--dashboard-text)' }}>
-                    {completedHabits}/{habits.length}
+      {/* Module Summary Cards */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.15 }}
+        className="mb-8"
+      >
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="font-heading text-lg" style={{ color: 'var(--dashboard-text)' }}>
+            Your Modules
+          </h2>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
+          {Object.entries(MODULE_CONFIGS).map(([key, config], index) => {
+            const moduleData = summary?.modules?.[key] || {};
+            const Icon = config.icon;
+            const gradient = moduleData.gradient || ['#666', '#999'];
+
+            let mainValue = '';
+            let subText = '';
+
+            if (key === 'habits') {
+              mainValue = `${moduleData.completed_today || 0}/${moduleData.total || 0}`;
+              subText = 'today';
+            } else if (key === 'tasks') {
+              mainValue = `${moduleData.completed_today || 0}/${moduleData.total || 0}`;
+              subText = 'done';
+            } else if (key === 'calories') {
+              mainValue = moduleData.total_today || 0;
+              subText = 'kcal';
+            } else {
+              mainValue = moduleData.total || 0;
+              subText = 'total';
+            }
+
+            return (
+              <motion.div
+                key={key}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.3, delay: 0.2 + index * 0.05 }}
+                whileHover={{ scale: 1.03, y: -2 }}
+                whileTap={{ scale: 0.97 }}
+              >
+                <button
+                  onClick={() => navigate(config.path)}
+                  className="w-full rounded-2xl p-4 text-left transition-shadow hover:shadow-lg"
+                  style={{
+                    background: `linear-gradient(135deg, ${gradient[0]}, ${gradient[1]})`,
+                    color: 'white'
+                  }}
+                >
+                  <Icon className="w-5 h-5 mb-3 opacity-80" />
+                  <p className="font-heading text-2xl leading-none">{mainValue}</p>
+                  <p className="text-xs mt-1 opacity-70 font-body">{subText}</p>
+                  <p className="text-[10px] mt-2 font-body font-medium opacity-60 uppercase tracking-wider">
+                    {config.label}
+                  </p>
+                </button>
+              </motion.div>
+            );
+          })}
+        </div>
+      </motion.div>
+
+      {/* Main Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        {/* Left Column: Habits + Tasks */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Today's Habits */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.25 }}
+          >
+            <Card className="nucleus-card border-0">
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="font-heading text-lg flex items-center gap-2" style={{ color: 'var(--dashboard-text)' }}>
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center"
+                      style={{ backgroundColor: '#7C9A6E20' }}>
+                      <CheckCircle2 className="w-4 h-4" style={{ color: '#7C9A6E' }} />
+                    </div>
+                    Today's Habits
+                  </CardTitle>
+                  <div className="flex items-center gap-3">
+                    {/* Mini progress */}
+                    <div className="flex items-center gap-2">
+                      <div className="w-24 h-2 rounded-full bg-black/5 overflow-hidden">
+                        <motion.div
+                          className="h-full rounded-full"
+                          style={{ backgroundColor: '#7C9A6E' }}
+                          initial={{ width: 0 }}
+                          animate={{ width: `${habitProgress}%` }}
+                          transition={{ duration: 1, delay: 0.5 }}
+                        />
+                      </div>
+                      <span className="text-xs font-heading" style={{ color: '#7C9A6E' }}>
+                        {completedHabits}/{habits.length}
+                      </span>
+                    </div>
+                    <button onClick={() => navigate('/habits')} className="p-1 rounded-full hover:bg-black/5">
+                      <ChevronRight className="w-4 h-4 opacity-40" />
+                    </button>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-1">
+                {todayHabits.length === 0 ? (
+                  <p className="text-sm font-body py-4 text-center" style={{ color: 'var(--dashboard-text)', opacity: 0.4 }}>
+                    No habits yet. Start building your routine!
+                  </p>
+                ) : (
+                  todayHabits.map((habit) => (
+                    <motion.div
+                      key={habit.habit_id}
+                      data-testid={`habit-quick-${habit.habit_id}`}
+                      className="flex items-center gap-3 py-2.5 px-3 rounded-xl transition-all cursor-pointer hover:bg-black/[0.03] group"
+                      onClick={() => handleToggleHabit(habit)}
+                      whileTap={{ scale: 0.98 }}
+                    >
+                      <div
+                        className="w-6 h-6 rounded-lg flex items-center justify-center transition-all"
+                        style={{
+                          backgroundColor: habit.completed ? habit.color : 'transparent',
+                          border: `2px solid ${habit.color}`
+                        }}
+                      >
+                        {habit.completed && <CheckCircle2 className="w-3.5 h-3.5 text-white" />}
+                      </div>
+                      <span
+                        className={`font-body flex-1 transition-all ${habit.completed ? 'line-through opacity-40' : ''}`}
+                        style={{ color: 'var(--dashboard-text)' }}
+                      >
+                        {habit.name}
+                      </span>
+                      {habit.completed && (
+                        <span className="text-xs px-2 py-0.5 rounded-full font-body" style={{ backgroundColor: `${habit.color}15`, color: habit.color }}>
+                          Done
+                        </span>
+                      )}
+                    </motion.div>
+                  ))
+                )}
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          {/* Today's Tasks */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+          >
+            <Card className="nucleus-card border-0">
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="font-heading text-lg flex items-center gap-2" style={{ color: 'var(--dashboard-text)' }}>
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center"
+                      style={{ backgroundColor: 'var(--gold-accent)15' }}>
+                      <Sparkles className="w-4 h-4" style={{ color: 'var(--gold-accent)' }} />
+                    </div>
+                    Today's Tasks
+                  </CardTitle>
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs font-body" style={{ color: 'var(--dashboard-text)', opacity: 0.5 }}>
+                      {completedTasks}/{tasks.length} done
+                    </span>
+                    <button onClick={() => navigate('/planner')} className="p-1 rounded-full hover:bg-black/5">
+                      <ChevronRight className="w-4 h-4 opacity-40" />
+                    </button>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-1">
+                {priorityTasks.length === 0 && completedTasks === 0 ? (
+                  <p className="text-sm font-body py-4 text-center" style={{ color: 'var(--dashboard-text)', opacity: 0.4 }}>
+                    No tasks for today. Plan your day!
+                  </p>
+                ) : (
+                  <>
+                    {priorityTasks.map((task, index) => {
+                      const priorityColors = {
+                        "urgent-important": "#EF4444",
+                        "important": "#F59E0B",
+                        "urgent": "#3B82F6",
+                        "medium": "#6B7280",
+                        "neither": "#9CA3AF"
+                      };
+                      const color = priorityColors[task.priority] || '#6B7280';
+
+                      return (
+                        <motion.div
+                          key={task.task_id}
+                          data-testid={`priority-task-${task.task_id}`}
+                          className="flex items-center gap-3 py-2.5 px-3 rounded-xl hover:bg-black/[0.03] cursor-pointer group"
+                          onClick={() => handleToggleTask(task)}
+                          whileTap={{ scale: 0.98 }}
+                        >
+                          <div className="w-6 h-6 rounded-lg border-2 flex items-center justify-center"
+                            style={{ borderColor: color }}>
+                            <span className="text-[10px] font-bold" style={{ color }}>{index + 1}</span>
+                          </div>
+                          <span className="font-body flex-1" style={{ color: 'var(--dashboard-text)' }}>
+                            {task.title}
+                          </span>
+                          {task.estimated_time && (
+                            <span className="text-xs opacity-40 font-body">{task.estimated_time}m</span>
+                          )}
+                        </motion.div>
+                      );
+                    })}
+                    {completedTasks > 0 && (
+                      <div className="pt-2 mt-2 border-t border-black/5">
+                        <p className="text-xs font-body px-3 py-1" style={{ color: 'var(--dashboard-text)', opacity: 0.35 }}>
+                          ✓ {completedTasks} task{completedTasks > 1 ? 's' : ''} completed today
+                        </p>
+                      </div>
+                    )}
+                  </>
+                )}
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          {/* Stats Overview */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.35 }}
+          >
+            <Card className="nucleus-card border-0">
+              <CardContent className="p-6">
+                <div className="flex items-center gap-2 mb-5">
+                  <TrendingUp className="w-4 h-4" style={{ color: 'var(--gold-accent)' }} />
+                  <span className="font-heading text-sm tracking-wider uppercase" style={{ color: 'var(--gold-accent)' }}>
+                    All-time Stats
                   </span>
                 </div>
-              </div>
-              <div>
-                <p className="font-heading text-lg" style={{ color: 'var(--dashboard-text)' }}>Today's Habits</p>
-                <p className="text-sm font-body" style={{ color: 'var(--dashboard-text-secondary)' }}>
-                  {habits.length === 0 ? "No habits yet" : `${completedHabits} completed`}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-6">
+                  <StatItem icon={<Flame className="w-5 h-5" />} label="Best Streak" value={stats?.habits_streak || 0} suffix="days" highlight />
+                  <StatItem icon={<Link2 className="w-5 h-5" />} label="Links" value={stats?.links_saved || 0} />
+                  <StatItem icon={<BookOpen className="w-5 h-5" />} label="Words" value={stats?.words_collected || 0} />
+                  <StatItem icon={<Lightbulb className="w-5 h-5" />} label="Ideas" value={stats?.ideas_captured || 0} />
+                  <StatItem icon={<CheckCircle2 className="w-5 h-5" />} label="Tasks Done" value={stats?.tasks_completed || 0} />
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        </div>
 
-        {/* Today's Habits - Spans 2 columns */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-          className="md:col-span-2 lg:col-span-3"
-        >
-          <Card className="nucleus-card h-full border-0">
-            <CardHeader className="pb-3">
-              <CardTitle className="font-heading text-lg flex items-center gap-2" style={{ color: 'var(--dashboard-text)' }}>
-                <CheckCircle2 className="w-5 h-5" style={{ color: 'var(--gold-accent)' }} />
-                Today's Habits
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {todayHabits.length === 0 ? (
-                <p className="text-sm font-body" style={{ color: 'var(--dashboard-text-secondary)' }}>
-                  No habits yet. Add some in the Habit Tracker!
-                </p>
-              ) : (
-                todayHabits.slice(0, 4).map((habit) => (
-                  <div
-                    key={habit.habit_id}
-                    data-testid={`habit-quick-${habit.habit_id}`}
-                    className="flex items-center gap-3 p-2 rounded-lg transition-colors hover:bg-black/5 cursor-pointer"
-                    onClick={() => handleToggleHabit(habit)}
-                  >
-                    <Checkbox
-                      checked={habit.completed}
-                      onCheckedChange={() => handleToggleHabit(habit)}
-                      className="border-2"
-                      style={{
-                        borderColor: habit.color,
-                        backgroundColor: habit.completed ? habit.color : 'transparent'
-                      }}
-                    />
-                    <span
-                      className={`font-body ${habit.completed ? 'line-through opacity-60' : ''}`}
-                      style={{ color: 'var(--dashboard-text)' }}
+        {/* Right Column: Activity Feed + Quick Actions */}
+        <div className="space-y-6">
+          {/* Quick Actions */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+          >
+            <Card className="nucleus-card border-0">
+              <CardHeader className="pb-3">
+                <CardTitle className="font-heading text-lg flex items-center gap-2" style={{ color: 'var(--dashboard-text)' }}>
+                  <Zap className="w-4 h-4" style={{ color: 'var(--gold-accent)' }} />
+                  Quick Actions
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="grid grid-cols-2 gap-2">
+                {[
+                  { label: "Log Meal", icon: UtensilsCrossed, path: "/calories", color: "#4CAF50" },
+                  { label: "Add Word", icon: BookOpen, path: "/vocabulary", color: "#9C27B0" },
+                  { label: "Save Link", icon: Link2, path: "/links", color: "#2196F3" },
+                  { label: "New Idea", icon: Lightbulb, path: "/ideas", color: "#FF9800" },
+                ].map((action) => {
+                  const Icon = action.icon;
+                  return (
+                    <motion.button
+                      key={action.label}
+                      whileHover={{ scale: 1.03 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => navigate(action.path)}
+                      className="flex items-center gap-2 p-3 rounded-xl hover:shadow-md transition-all text-left"
+                      style={{ backgroundColor: `${action.color}08`, border: `1px solid ${action.color}15` }}
                     >
-                      {habit.name}
-                    </span>
-                  </div>
-                ))
-              )}
-            </CardContent>
-          </Card>
-        </motion.div>
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center"
+                        style={{ backgroundColor: `${action.color}15` }}>
+                        <Icon className="w-4 h-4" style={{ color: action.color }} />
+                      </div>
+                      <span className="font-body text-sm" style={{ color: 'var(--dashboard-text)' }}>
+                        {action.label}
+                      </span>
+                    </motion.button>
+                  );
+                })}
+              </CardContent>
+            </Card>
+          </motion.div>
 
-        {/* Today's Priorities - Spans 2 columns */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.25 }}
-          className="md:col-span-2 lg:col-span-3"
-        >
-          <Card className="nucleus-card h-full border-0">
-            <CardHeader className="pb-3">
-              <CardTitle className="font-heading text-lg flex items-center gap-2" style={{ color: 'var(--dashboard-text)' }}>
-                <Sparkles className="w-5 h-5" style={{ color: 'var(--gold-accent)' }} />
-                Today's Priorities
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {priorityTasks.length === 0 ? (
-                <p className="text-sm font-body" style={{ color: 'var(--dashboard-text-secondary)' }}>
-                  No tasks for today. Add some in the Planner!
-                </p>
-              ) : (
-                priorityTasks.map((task, index) => (
-                  <div
-                    key={task.task_id}
-                    data-testid={`priority-task-${task.task_id}`}
-                    className="flex items-center gap-3 p-2 rounded-lg transition-colors hover:bg-black/5 cursor-pointer"
-                    onClick={() => handleToggleTask(task)}
-                  >
-                    <span
-                      className="w-6 h-6 rounded-full flex items-center justify-center text-sm font-medium text-white"
-                      style={{ backgroundColor: 'var(--gold-accent)' }}
-                    >
-                      {index + 1}
-                    </span>
-                    <span className="font-body" style={{ color: 'var(--dashboard-text)' }}>
-                      {task.title}
-                    </span>
+          {/* Activity Feed */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+          >
+            <Card className="nucleus-card border-0">
+              <CardHeader className="pb-3">
+                <CardTitle className="font-heading text-lg flex items-center gap-2" style={{ color: 'var(--dashboard-text)' }}>
+                  <Activity className="w-4 h-4" style={{ color: 'var(--gold-accent)' }} />
+                  Recent Activity
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {activities.length === 0 ? (
+                  <p className="text-sm font-body py-6 text-center" style={{ color: 'var(--dashboard-text)', opacity: 0.4 }}>
+                    Your activity will show up here
+                  </p>
+                ) : (
+                  <div className="space-y-1 max-h-[400px] overflow-y-auto pr-1" style={{ scrollbarWidth: 'thin' }}>
+                    {activities.slice(0, 15).map((activity, index) => {
+                      const IconComp = ACTIVITY_ICONS[activity.icon] || Activity;
+                      return (
+                        <motion.div
+                          key={`${activity.type}-${activity.title}-${index}`}
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ duration: 0.3, delay: 0.3 + index * 0.03 }}
+                          className="flex items-start gap-3 py-2.5 px-2 rounded-lg hover:bg-black/[0.02] transition-colors"
+                        >
+                          <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
+                            style={{ backgroundColor: `${activity.color}15` }}>
+                            <IconComp className="w-3.5 h-3.5" style={{ color: activity.color }} />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-body text-sm truncate" style={{ color: 'var(--dashboard-text)' }}>
+                              <span className="capitalize opacity-50">{activity.action}</span>{' '}
+                              <span className="font-medium">{activity.title}</span>
+                            </p>
+                            {activity.subtitle && (
+                              <p className="text-xs font-body opacity-40 truncate">{activity.subtitle}</p>
+                            )}
+                          </div>
+                          <span className="text-[10px] font-body opacity-30 flex-shrink-0 mt-1">
+                            {activity.date === today ? 'Today' : 
+                              (() => {
+                                try { return format(new Date(activity.date + 'T00:00:00'), "MMM d"); }
+                                catch { return activity.date; }
+                              })()
+                            }
+                          </span>
+                        </motion.div>
+                      );
+                    })}
                   </div>
-                ))
-              )}
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        {/* Stats Strip - Full width */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.3 }}
-          className="md:col-span-4 lg:col-span-6"
-        >
-          <Card className="nucleus-card border-0">
-            <CardContent className="p-6">
-              <div className="grid grid-cols-2 md:grid-cols-5 gap-6">
-                <StatItem
-                  icon={<Flame className="w-5 h-5" />}
-                  label="Habit Streak"
-                  value={stats.habits_streak}
-                  suffix="days"
-                  highlight
-                />
-                <StatItem
-                  icon={<Link2 className="w-5 h-5" />}
-                  label="Links Saved"
-                  value={stats.links_saved}
-                />
-                <StatItem
-                  icon={<BookOpen className="w-5 h-5" />}
-                  label="Words Collected"
-                  value={stats.words_collected}
-                />
-                <StatItem
-                  icon={<Lightbulb className="w-5 h-5" />}
-                  label="Ideas Captured"
-                  value={stats.ideas_captured}
-                />
-                <StatItem
-                  icon={<CheckCircle2 className="w-5 h-5" />}
-                  label="Tasks Done"
-                  value={stats.tasks_completed}
-                />
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
+                )}
+              </CardContent>
+            </Card>
+          </motion.div>
+        </div>
       </div>
     </div>
   );
@@ -389,9 +627,9 @@ const StatItem = ({ icon, label, value, suffix, highlight }) => (
     </div>
     <p className="font-heading text-2xl" style={{ color: 'var(--dashboard-text)' }}>
       {value}
-      {suffix && <span className="text-sm ml-1 opacity-60">{suffix}</span>}
+      {suffix && <span className="text-xs ml-1 opacity-50">{suffix}</span>}
     </p>
-    <p className="text-xs font-body" style={{ color: 'var(--dashboard-text-secondary)' }}>{label}</p>
+    <p className="text-xs font-body" style={{ color: 'var(--dashboard-text)', opacity: 0.45 }}>{label}</p>
   </div>
 );
 

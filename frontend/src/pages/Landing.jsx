@@ -1,104 +1,109 @@
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/App";
 import { motion } from "framer-motion";
-import { ArrowRight } from "lucide-react";
+import { 
+  ArrowRight, 
+  Target, 
+  Calendar, 
+  Link2, 
+  BookOpen, 
+  Lightbulb, 
+  UtensilsCrossed,
+  MessageSquare,
+  Sparkles
+} from "lucide-react";
+
+const FEATURES = [
+  { icon: Target, label: "Habit Tracking", desc: "90-day visual grids with streaks" },
+  { icon: Calendar, label: "Daily Planner", desc: "Time-blocking with AI prioritization" },
+  { icon: UtensilsCrossed, label: "Calorie Tracker", desc: "AI-powered meal estimation" },
+  { icon: Link2, label: "Link Vault", desc: "Save & organize all your links" },
+  { icon: BookOpen, label: "Vocabulary", desc: "Build your word mastery" },
+  { icon: Lightbulb, label: "Ideas Capture", desc: "Never lose a thought again" },
+  { icon: MessageSquare, label: "BQ Practice", desc: "STAR method interview prep" },
+  { icon: Sparkles, label: "AI Powered", desc: "Smart insights across modules" },
+];
 
 const Landing = () => {
   const navigate = useNavigate();
   const { user, loading } = useAuth();
 
-  // Redirect if already logged in
   if (!loading && user) {
     navigate("/dashboard", { replace: true });
     return null;
   }
 
   const handleLogin = () => {
-    // REMINDER: DO NOT HARDCODE THE URL, OR ADD ANY FALLBACKS OR REDIRECT URLS, THIS BREAKS THE AUTH
     const redirectUrl = window.location.origin + '/dashboard';
     window.location.href = `https://auth.emergentagent.com/?redirect=${encodeURIComponent(redirectUrl)}`;
   };
 
   return (
     <div 
-      className="min-h-screen flex flex-col md:flex-row"
+      className="min-h-screen"
       style={{ backgroundColor: 'var(--dashboard-bg)' }}
     >
-      {/* Left Side - Hero Image */}
-      <div className="hidden md:block md:w-1/2 relative overflow-hidden">
-        <img
-          src="https://images.unsplash.com/photo-1580501170854-a66ac9b17e94?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzNDR8MHwxfHNlYXJjaHw0fHxtaW5pbWFsaXN0JTIwYWVzdGhldGljJTIwc3R1ZHklMjBkZXNrJTIwdW5pdmVyc2l0eSUyMGxpYnJhcnl8ZW58MHx8fHwxNzcyNTcyNzE1fDA&ixlib=rb-4.1.0&q=85"
-          alt="Minimal study desk"
-          className="w-full h-full object-cover"
-        />
-        <div 
-          className="absolute inset-0"
-          style={{ background: 'linear-gradient(to right, transparent 70%, var(--dashboard-bg))' }}
-        />
-      </div>
+      {/* Hero Section */}
+      <div className="min-h-screen flex flex-col items-center justify-center px-6 relative overflow-hidden">
+        {/* Background decoration */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-1/4 -left-32 w-96 h-96 rounded-full opacity-[0.04]"
+            style={{ background: 'radial-gradient(circle, var(--gold-accent), transparent)' }} />
+          <div className="absolute bottom-1/4 -right-32 w-96 h-96 rounded-full opacity-[0.04]"
+            style={{ background: 'radial-gradient(circle, #7C9A6E, transparent)' }} />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full opacity-[0.02]"
+            style={{ background: 'radial-gradient(circle, var(--gold-accent), transparent)' }} />
+        </div>
 
-      {/* Right Side - Login */}
-      <div className="flex-1 flex items-center justify-center p-8 md:p-12">
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-          className="w-full max-w-md"
+          transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+          className="text-center max-w-3xl relative z-10"
         >
-          {/* Logo/Brand */}
-          <div className="mb-12">
-            <h1 
-              className="font-heading text-5xl md:text-6xl mb-3"
-              style={{ color: 'var(--dashboard-text)' }}
-            >
-              Nucleus
-            </h1>
-            <p 
-              className="text-lg md:text-xl font-body"
-              style={{ color: 'var(--dashboard-text-secondary)' }}
-            >
-              Your personal command center & second brain
-            </p>
-          </div>
+          {/* Logo Mark */}
+          <motion.div
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.6, delay: 0.1 }}
+            className="mb-8 inline-flex items-center gap-3"
+          >
+            <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-white font-heading text-2xl shadow-lg"
+              style={{ background: 'linear-gradient(135deg, #C9A96E, #E8D5A3)' }}>
+              N
+            </div>
+          </motion.div>
 
-          {/* Features list */}
-          <div className="mb-10 space-y-4">
-            {[
-              "Track habits with beautiful 90-day grids",
-              "Plan your day with time-blocking",
-              "Capture ideas, links, and vocabulary",
-              "Practice behavioral questions for interviews"
-            ].map((feature, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.4, delay: 0.2 + index * 0.1 }}
-                className="flex items-center gap-3"
-              >
-                <div 
-                  className="w-2 h-2 rounded-full"
-                  style={{ backgroundColor: 'var(--gold-accent)' }}
-                />
-                <span 
-                  className="font-body"
-                  style={{ color: 'var(--dashboard-text)' }}
-                >
-                  {feature}
-                </span>
-              </motion.div>
-            ))}
-          </div>
+          <h1
+            className="font-heading text-6xl md:text-7xl lg:text-8xl mb-4"
+            style={{ color: 'var(--dashboard-text)' }}
+          >
+            Nucleus
+          </h1>
+
+          <p
+            className="text-xl md:text-2xl font-body mb-3 max-w-xl mx-auto"
+            style={{ color: 'var(--dashboard-text)', opacity: 0.6 }}
+          >
+            Your personal command center & second brain
+          </p>
+
+          <p
+            className="text-sm font-body mb-12 max-w-md mx-auto"
+            style={{ color: 'var(--dashboard-text)', opacity: 0.35 }}
+          >
+            Track habits, plan your day, capture ideas, build vocabulary, log meals — all in one beautiful space.
+          </p>
 
           {/* Login Button */}
           <motion.button
             data-testid="google-login-btn"
             onClick={handleLogin}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            className="w-full py-4 px-6 rounded-full flex items-center justify-center gap-3 font-body font-medium text-lg transition-all shadow-lg hover:shadow-xl"
-            style={{ 
-              backgroundColor: 'var(--gold-accent)',
+            whileHover={{ scale: 1.03, boxShadow: '0 20px 40px rgba(201, 169, 110, 0.25)' }}
+            whileTap={{ scale: 0.97 }}
+            className="py-4 px-10 rounded-full flex items-center justify-center gap-3 font-body font-medium text-lg transition-all shadow-lg mx-auto"
+            style={{
+              background: 'linear-gradient(135deg, var(--gold-accent), #E8D5A3)',
               color: 'white'
             }}
           >
@@ -123,15 +128,55 @@ const Landing = () => {
             Continue with Google
             <ArrowRight className="w-5 h-5" />
           </motion.button>
-
-          {/* Footer text */}
-          <p 
-            className="mt-8 text-center text-sm font-body"
-            style={{ color: 'var(--dashboard-text-secondary)' }}
-          >
-            Reduce friction. Capture everything. Build habits.
-          </p>
         </motion.div>
+
+        {/* Feature Grid */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.4 }}
+          className="mt-20 max-w-4xl mx-auto w-full relative z-10"
+        >
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {FEATURES.map((feature, index) => {
+              const Icon = feature.icon;
+              return (
+                <motion.div
+                  key={feature.label}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, delay: 0.5 + index * 0.06 }}
+                  className="p-4 rounded-2xl text-center transition-all hover:shadow-md"
+                  style={{ backgroundColor: 'rgba(255,255,255,0.5)', backdropFilter: 'blur(10px)' }}
+                >
+                  <div
+                    className="w-10 h-10 rounded-xl mx-auto mb-3 flex items-center justify-center"
+                    style={{ backgroundColor: 'rgba(201, 169, 110, 0.1)' }}
+                  >
+                    <Icon className="w-5 h-5" style={{ color: 'var(--gold-accent)' }} />
+                  </div>
+                  <p className="font-heading text-sm mb-1" style={{ color: 'var(--dashboard-text)' }}>
+                    {feature.label}
+                  </p>
+                  <p className="text-xs font-body" style={{ color: 'var(--dashboard-text)', opacity: 0.4 }}>
+                    {feature.desc}
+                  </p>
+                </motion.div>
+              );
+            })}
+          </div>
+        </motion.div>
+
+        {/* Footer */}
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5, delay: 1 }}
+          className="mt-16 text-center text-xs font-body mb-8"
+          style={{ color: 'var(--dashboard-text)', opacity: 0.25 }}
+        >
+          Reduce friction · Capture everything · Build habits
+        </motion.p>
       </div>
 
       {/* Grain Overlay */}
