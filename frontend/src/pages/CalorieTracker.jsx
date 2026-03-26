@@ -48,6 +48,12 @@ const CalorieTracker = () => {
   const [weekSummary, setWeekSummary] = useState([]);
   const [dailyWeight, setDailyWeight] = useState("");
   const [savingWeight, setSavingWeight] = useState(false);
+  const [summary, setSummary] = useState(null);
+  const [logs, setLogs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [newLog, setNewLog] = useState({ description: "", meal_type: "breakfast" });
+  const [estimating, setEstimating] = useState(null);
 
   const dateStr = format(selectedDate, "yyyy-MM-dd");
 
