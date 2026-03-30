@@ -52,12 +52,12 @@ const Landing = () => {
   const heroY = useTransform(scrollYProgress, [0, 0.15], [0, -60]);
 
   if (!loading && user) {
-    navigate("/dashboard", { replace: true });
+    navigate("/home", { replace: true });
     return null;
   }
 
   const handleLogin = () => {
-    const redirectUrl = window.location.origin + '/dashboard';
+    const redirectUrl = window.location.origin + '/home';
     window.location.href = `https://auth.emergentagent.com/?redirect=${encodeURIComponent(redirectUrl)}`;
   };
 

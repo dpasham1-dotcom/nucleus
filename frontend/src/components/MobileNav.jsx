@@ -1,6 +1,6 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { 
-  LayoutDashboard, 
+  Home, 
   Target, 
   Calendar, 
   Link2, 
@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 
 const NAV_ITEMS = [
-  { path: "/dashboard", icon: LayoutDashboard, label: "Home" },
+  { path: "/home", icon: Home, label: "Home" },
   { path: "/habits", icon: Target, label: "Habits" },
   { path: "/planner", icon: Calendar, label: "Planner" },
   { path: "/links", icon: Link2, label: "Links" },

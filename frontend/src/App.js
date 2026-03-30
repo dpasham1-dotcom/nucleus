@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from "framer-motion";
 // Pages
 import Landing from "@/pages/Landing";
 import AuthCallback from "@/pages/AuthCallback";
+import Home from "@/pages/Home";
 import Dashboard from "@/pages/Dashboard";
 import HabitTracker from "@/pages/HabitTracker";
 import DailyPlanner from "@/pages/DailyPlanner";
@@ -303,6 +304,16 @@ function AppRouter() {
     <ThemeWrapper>
       <Routes>
         <Route path="/" element={<Landing />} />
+        <Route
+          path="/home"
+          element={
+            <ProtectedRoute>
+              <AppLayout>
+                <Home />
+              </AppLayout>
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/dashboard"
           element={

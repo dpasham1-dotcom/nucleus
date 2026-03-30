@@ -44,7 +44,7 @@ const AuthCallback = () => {
 
         // Clear the hash and redirect to dashboard
         window.history.replaceState(null, "", window.location.pathname);
-        navigate("/dashboard", { replace: true, state: { user: response.data } });
+        navigate("/home", { replace: true, state: { user: response.data } });
       } catch (error) {
         console.error("Auth error:", error);
         navigate("/", { replace: true });

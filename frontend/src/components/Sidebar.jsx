@@ -4,6 +4,7 @@ import { useTheme } from "@/App";
 import { motion } from "framer-motion";
 import { 
   LayoutDashboard, 
+  Home,
   Target, 
   Calendar, 
   Link2, 
@@ -16,11 +17,13 @@ import {
   Plus,
   Sun,
   Moon,
-  Flame
+  Flame,
+  BarChart3
 } from "lucide-react";
 
 const NAV_ITEMS = [
-  { path: "/dashboard", icon: LayoutDashboard, label: "Home", color: "#C9A96E" },
+  { path: "/home", icon: Home, label: "Home", color: "#C9A96E" },
+  { path: "/dashboard", icon: BarChart3, label: "Dashboard", color: "#9A7A9A" },
   { path: "/habits", icon: Target, label: "Habits", color: "#7C9A6E" },
   { path: "/planner", icon: Calendar, label: "Planner", color: "#D4A574" },
   { path: "/links", icon: Link2, label: "Link Vault", color: "#2196F3" },
