@@ -47,6 +47,38 @@ export const useAuth = () => {
   return context;
 };
 
+// Theme Context
+const ThemeContext = createContext(null);
+
+export const useTheme = () => {
+  const context = useContext(ThemeContext);
+  if (!context) {
+    throw new Error("useTheme must be used within ThemeProvider");
+  }
+  return context;
+};
+
+// Theme Provider
+const ThemeProvider = ({ children }) => {
+  const [isDark, setIsDark] = useState(() => {
+    const stored = localStorage.getItem("nucleus_theme");
+    return stored === "dark";
+  });
+
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", isDark ? "dark" : "light");
+    localStorage.setItem("nucleus_theme", isDark ? "dark" : "light");
+  }, [isDark]);
+
+  const toggleTheme = () => setIsDark((prev) => !prev);
+
+  return (
+    <ThemeContext.Provider value={{ isDark, toggleTheme }}>
+      {children}
+    </ThemeContext.Provider>
+  );
+};
+
 // Auth Provider Component
 const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -369,10 +401,12 @@ function AppRouter() {
 function App() {
   return (
     <BrowserRouter>
-      <AuthProvider>
-        <AppRouter />
-        <Toaster position="bottom-right" richColors />
-      </AuthProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <AppRouter />
+          <Toaster position="bottom-right" richColors />
+        </AuthProvider>
+      </ThemeProvider>
     </BrowserRouter>
   );
 }

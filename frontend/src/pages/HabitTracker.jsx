@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useAuth, API } from "@/App";
+import Confetti from "@/components/Confetti";
 import axios from "axios";
 import { format, subDays, addDays, startOfDay, differenceInDays } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion";
@@ -63,6 +64,8 @@ const HabitTracker = () => {
   const [loading, setLoading] = useState(true);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [poppedCell, setPoppedCell] = useState(null);
   const [newHabit, setNewHabit] = useState({
     name: "",
     color: "#7C9A6E",
@@ -150,6 +153,10 @@ const HabitTracker = () => {
     const isCompleted = selectedHabit.completions?.includes(dateStr);
     const isFrozen = selectedHabit.freeze_days?.includes(dateStr);
 
+    // Trigger pop animation
+    setPoppedCell(dateStr);
+    setTimeout(() => setPoppedCell(null), 400);
+
     try {
       const response = await axios.post(
         `${API}/habits/${selectedHabit.habit_id}/toggle`,
@@ -169,7 +176,23 @@ const HabitTracker = () => {
       if (isFreeze) {
         toast.success(isFrozen ? "Freeze removed" : "Day frozen ❄️");
       } else {
-        toast.success(isCompleted ? "Unchecked" : "Completed! 🎉");
+        if (!isCompleted) {
+          toast.success("Completed! 🎉");
+          // Check if ALL habits are now complete for today
+          const updatedHabits = habits.map(h => 
+            h.habit_id === selectedHabit.habit_id ? response.data : h
+          );
+          const allComplete = updatedHabits.every(h => 
+            h.completions?.includes(today)
+          );
+          if (allComplete && habits.length > 1) {
+            setShowConfetti(true);
+            toast.success("🏆 All habits completed today! Amazing!", { duration: 5000 });
+            setTimeout(() => setShowConfetti(false), 4000);
+          }
+        } else {
+          toast.success("Unchecked");
+        }
       }
     } catch (error) {
       toast.error("Failed to update habit");
@@ -245,6 +268,7 @@ const HabitTracker = () => {
       className="p-6 md:p-12 max-w-7xl mx-auto"
       style={{ backgroundColor: 'var(--habit-bg)', minHeight: '100vh' }}
     >
+      <Confetti active={showConfetti} />
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -481,6 +505,7 @@ const HabitTracker = () => {
                           aspect-square rounded-lg cursor-pointer transition-all relative
                           ${isToday ? 'habit-today' : ''}
                           ${isFuture ? 'opacity-30 cursor-not-allowed' : 'hover:scale-105'}
+                          ${poppedCell === dateStr ? 'completion-pop' : ''}
                         `}
                         style={{
                           backgroundColor: isCompleted

@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuth, API } from "@/App";
+import { useTheme } from "@/App";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { format } from "date-fns";
@@ -18,18 +19,18 @@ import {
   UtensilsCrossed,
   MessageSquare,
   Calendar,
-  Plus,
   ArrowRight,
   TrendingUp,
   Zap,
   Activity,
-  ChevronRight
+  ChevronRight,
+  Award
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import Confetti from "@/components/Confetti";
 
 const QUOTES = [
   "The secret of getting ahead is getting started.",
@@ -63,8 +64,75 @@ const ACTIVITY_ICONS = {
   "lightbulb": Lightbulb
 };
 
+// Animated counter component
+const AnimatedCounter = ({ value, duration = 1200, suffix = "", className = "", style = {} }) => {
+  const [displayValue, setDisplayValue] = useState(0);
+  const startRef = useRef(null);
+  const rafRef = useRef(null);
+
+  useEffect(() => {
+    const numValue = typeof value === 'number' ? value : parseInt(value) || 0;
+    if (numValue === 0) { setDisplayValue(0); return; }
+
+    startRef.current = performance.now();
+    const animate = (now) => {
+      const elapsed = now - startRef.current;
+      const progress = Math.min(elapsed / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
+      setDisplayValue(Math.round(numValue * eased));
+      if (progress < 1) {
+        rafRef.current = requestAnimationFrame(animate);
+      }
+    };
+    rafRef.current = requestAnimationFrame(animate);
+    return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
+  }, [value, duration]);
+
+  return <span className={className} style={style}>{displayValue}{suffix}</span>;
+};
+
+// SVG Progress Ring
+const ProgressRing = ({ progress, size = 120, strokeWidth = 8, color = "#7C9A6E", label, sublabel }) => {
+  const radius = (size - strokeWidth) / 2;
+  const circumference = radius * 2 * Math.PI;
+  const offset = circumference - (Math.min(progress, 100) / 100) * circumference;
+
+  return (
+    <div className="relative flex items-center justify-center" style={{ width: size, height: size }}>
+      <svg width={size} height={size} className="transform -rotate-90">
+        <circle
+          cx={size / 2} cy={size / 2} r={radius}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={strokeWidth}
+          className="opacity-10"
+        />
+        <motion.circle
+          cx={size / 2} cy={size / 2} r={radius}
+          fill="none"
+          stroke={color}
+          strokeWidth={strokeWidth}
+          strokeLinecap="round"
+          strokeDasharray={circumference}
+          initial={{ strokeDashoffset: circumference }}
+          animate={{ strokeDashoffset: offset }}
+          transition={{ duration: 1.5, ease: [0.22, 1, 0.36, 1], delay: 0.3 }}
+        />
+      </svg>
+      <div className="absolute inset-0 flex flex-col items-center justify-center">
+        <span className="font-heading text-2xl" style={{ color: 'var(--dashboard-text)' }}>
+          <AnimatedCounter value={Math.round(progress)} suffix="%" duration={1500} />
+        </span>
+        {label && <span className="text-[10px] font-body font-medium opacity-60">{label}</span>}
+        {sublabel && <span className="text-[9px] font-body opacity-40">{sublabel}</span>}
+      </div>
+    </div>
+  );
+};
+
 const Dashboard = () => {
   const { user } = useAuth();
+  const { isDark } = useTheme();
   const navigate = useNavigate();
   const [intention, setIntention] = useState("");
   const [habits, setHabits] = useState([]);
@@ -73,6 +141,7 @@ const Dashboard = () => {
   const [activities, setActivities] = useState([]);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showConfetti, setShowConfetti] = useState(false);
   const [quote] = useState(() => QUOTES[Math.floor(Math.random() * QUOTES.length)]);
 
   const today = format(new Date(), "yyyy-MM-dd");
@@ -125,7 +194,20 @@ const Dashboard = () => {
         { withCredentials: true }
       );
       fetchAllData();
-      toast.success(isCompleted ? "Habit unchecked" : "Habit completed! 🎉");
+      if (!isCompleted) {
+        toast.success("Habit completed! 🎉");
+        // Check if all habits are now complete
+        const remainingIncomplete = habits.filter(h => 
+          !h.completions?.includes(today) && h.habit_id !== habit.habit_id
+        ).length;
+        if (remainingIncomplete === 0 && habits.length > 1) {
+          setShowConfetti(true);
+          toast.success("🏆 All habits completed today! Amazing!", { duration: 5000 });
+          setTimeout(() => setShowConfetti(false), 4000);
+        }
+      } else {
+        toast.success("Habit unchecked");
+      }
     } catch (error) {
       toast.error("Failed to update habit");
     }
@@ -175,6 +257,41 @@ const Dashboard = () => {
 
   const completedTasks = tasks.filter(t => t.completed).length;
 
+  // Calculate productivity score
+  const productivityScore = Math.round(
+    (habitProgress * 0.4) +
+    (tasks.length > 0 ? (completedTasks / tasks.length) * 100 * 0.35 : 0) +
+    (intention ? 15 : 0) +
+    (activities.length > 0 ? 10 : 0)
+  );
+
+  // Smart tips
+  const getSmartTips = () => {
+    const tips = [];
+    const hour = new Date().getHours();
+
+    if (habits.length > 0 && completedHabits === 0 && hour > 10) {
+      tips.push("☀️ You haven't checked off any habits yet — start with the easiest one!");
+    }
+    if (habits.length > 0 && completedHabits === habits.length) {
+      tips.push("🏆 All habits done! You're on fire today.");
+    }
+    if (tasks.length > 0 && completedTasks === 0 && hour > 12) {
+      tips.push("📋 No tasks done yet — try tackling your top priority for 25 minutes.");
+    }
+    if (!intention && hour < 14) {
+      tips.push("🎯 Set your intention for the day to stay focused.");
+    }
+    if (habits.length > 0 && completedHabits > 0 && completedHabits < habits.length) {
+      tips.push(`💪 ${habits.length - completedHabits} habit${habits.length - completedHabits > 1 ? 's' : ''} left — you got this!`);
+    }
+    if (stats?.habits_streak >= 7) {
+      tips.push(`🔥 ${stats.habits_streak}-day streak! Don't break the chain.`);
+    }
+
+    return tips.length > 0 ? tips[0] : "✨ Make today count. You're building something special.";
+  };
+
   if (loading) {
     return (
       <div className="p-6 md:p-12 flex items-center justify-center min-h-[60vh]">
@@ -193,12 +310,14 @@ const Dashboard = () => {
       className="p-6 md:p-12 max-w-7xl mx-auto"
       style={{ backgroundColor: 'var(--dashboard-bg)', minHeight: '100vh' }}
     >
+      <Confetti active={showConfetti} />
+
       {/* Hero Header */}
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-        className="mb-10"
+        className="mb-8"
       >
         <div className="flex items-center gap-2 mb-3">
           <GreetingIcon className="w-5 h-5" style={{ color: 'var(--gold-accent)' }} />
@@ -207,17 +326,17 @@ const Dashboard = () => {
           </span>
         </div>
         <h1
-          className="font-heading text-4xl md:text-5xl lg:text-6xl mb-3"
+          className="font-heading text-4xl md:text-5xl lg:text-6xl mb-2"
           style={{ color: 'var(--dashboard-text)' }}
         >
-          {greeting.text}, {user?.name?.split(' ')[0]}
+          {greeting.text}, <span className="gradient-text">{user?.name?.split(' ')[0]}</span>
         </h1>
         <p className="font-body text-base md:text-lg italic" style={{ color: 'var(--dashboard-text)', opacity: 0.4 }}>
           "{quote}"
         </p>
       </motion.div>
 
-      {/* Daily Intention */}
+      {/* Score + Ring + Tips Row */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -227,26 +346,85 @@ const Dashboard = () => {
         <Card className="nucleus-card border-0 overflow-hidden" style={{ position: 'relative' }}>
           <div style={{
             position: 'absolute', top: 0, left: 0, right: 0, height: '3px',
-            background: 'linear-gradient(90deg, var(--gold-accent), #E8D5A3, var(--gold-accent))'
+            background: `linear-gradient(90deg, var(--gold-accent), #E8D5A3, ${habitProgress === 100 ? '#7C9A6E' : 'var(--gold-accent)'})`
           }} />
           <CardContent className="p-6">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-8 h-8 rounded-full flex items-center justify-center"
-                style={{ backgroundColor: 'var(--gold-accent)15' }}>
-                <Target className="w-4 h-4" style={{ color: 'var(--gold-accent)' }} />
+            <div className="flex flex-col md:flex-row items-center gap-6">
+              {/* Progress Ring */}
+              <div className="flex-shrink-0">
+                <ProgressRing
+                  progress={habitProgress}
+                  size={110}
+                  strokeWidth={8}
+                  color={habitProgress === 100 ? '#7C9A6E' : 'var(--gold-accent)'}
+                  label="Habits"
+                  sublabel={`${completedHabits}/${habits.length}`}
+                />
               </div>
-              <span className="font-heading text-sm tracking-wider uppercase" style={{ color: 'var(--gold-accent)' }}>
-                Today's Intention
-              </span>
+
+              {/* Intention + Score */}
+              <div className="flex-1 w-full">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center"
+                    style={{ backgroundColor: 'rgba(201, 169, 110, 0.1)' }}>
+                    <Target className="w-4 h-4" style={{ color: 'var(--gold-accent)' }} />
+                  </div>
+                  <span className="font-heading text-sm tracking-wider uppercase" style={{ color: 'var(--gold-accent)' }}>
+                    Today's Intention
+                  </span>
+                </div>
+                <Input
+                  data-testid="daily-intention-input"
+                  placeholder="What's your main focus for today?"
+                  value={intention}
+                  onChange={(e) => handleIntentionChange(e.target.value)}
+                  className="border-0 bg-transparent text-xl font-body placeholder:opacity-30 focus-visible:ring-0 p-0"
+                  style={{ color: 'var(--dashboard-text)' }}
+                />
+                {/* Smart Tip */}
+                <motion.p
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.8 }}
+                  className="text-sm font-body mt-3 px-3 py-2 rounded-lg"
+                  style={{ 
+                    backgroundColor: isDark ? 'rgba(201, 169, 110, 0.08)' : 'rgba(201, 169, 110, 0.06)',
+                    color: 'var(--dashboard-text)', 
+                    opacity: 0.7 
+                  }}
+                >
+                  {getSmartTips()}
+                </motion.p>
+              </div>
+
+              {/* Productivity Score */}
+              <div className="flex-shrink-0 text-center px-4">
+                <motion.div
+                  initial={{ scale: 0.5, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ duration: 0.6, delay: 0.4, type: "spring" }}
+                >
+                  <div className="w-20 h-20 rounded-2xl flex flex-col items-center justify-center mx-auto mb-2"
+                    style={{ 
+                      background: productivityScore >= 80 
+                        ? 'linear-gradient(135deg, #7C9A6E, #9ABF8A)' 
+                        : productivityScore >= 50 
+                          ? 'linear-gradient(135deg, var(--gold-accent), #E8D5A3)'
+                          : `linear-gradient(135deg, ${isDark ? '#333' : '#E8E0D5'}, ${isDark ? '#444' : '#F0EDE8'})`,
+                      color: productivityScore >= 50 ? 'white' : 'var(--dashboard-text)'
+                    }}
+                  >
+                    <AnimatedCounter 
+                      value={productivityScore} 
+                      className="font-heading text-2xl" 
+                      duration={1500}
+                    />
+                    <span className="text-[9px] font-body opacity-80">score</span>
+                  </div>
+                  <p className="text-xs font-body opacity-50">Productivity</p>
+                </motion.div>
+              </div>
             </div>
-            <Input
-              data-testid="daily-intention-input"
-              placeholder="What's your main focus for today?"
-              value={intention}
-              onChange={(e) => handleIntentionChange(e.target.value)}
-              className="border-0 bg-transparent text-xl font-body placeholder:opacity-30 focus-visible:ring-0 p-0"
-              style={{ color: 'var(--dashboard-text)' }}
-            />
           </CardContent>
         </Card>
       </motion.div>
@@ -292,12 +470,12 @@ const Dashboard = () => {
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.3, delay: 0.2 + index * 0.05 }}
-                whileHover={{ scale: 1.03, y: -2 }}
+                whileHover={{ scale: 1.05, y: -4 }}
                 whileTap={{ scale: 0.97 }}
               >
                 <button
                   onClick={() => navigate(config.path)}
-                  className="w-full rounded-2xl p-4 text-left transition-shadow hover:shadow-lg"
+                  className="w-full rounded-2xl p-4 text-left transition-shadow hover:shadow-xl"
                   style={{
                     background: `linear-gradient(135deg, ${gradient[0]}, ${gradient[1]})`,
                     color: 'white'
@@ -340,7 +518,8 @@ const Dashboard = () => {
                   <div className="flex items-center gap-3">
                     {/* Mini progress */}
                     <div className="flex items-center gap-2">
-                      <div className="w-24 h-2 rounded-full bg-black/5 overflow-hidden">
+                      <div className="w-24 h-2 rounded-full overflow-hidden"
+                        style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)' }}>
                         <motion.div
                           className="h-full rounded-full"
                           style={{ backgroundColor: '#7C9A6E' }}
@@ -369,19 +548,23 @@ const Dashboard = () => {
                     <motion.div
                       key={habit.habit_id}
                       data-testid={`habit-quick-${habit.habit_id}`}
-                      className="flex items-center gap-3 py-2.5 px-3 rounded-xl transition-all cursor-pointer hover:bg-black/[0.03] group"
+                      className="flex items-center gap-3 py-2.5 px-3 rounded-xl transition-all cursor-pointer group"
                       onClick={() => handleToggleHabit(habit)}
                       whileTap={{ scale: 0.98 }}
+                      style={{ backgroundColor: 'transparent' }}
+                      whileHover={{ backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)' }}
                     >
-                      <div
+                      <motion.div
                         className="w-6 h-6 rounded-lg flex items-center justify-center transition-all"
                         style={{
                           backgroundColor: habit.completed ? habit.color : 'transparent',
                           border: `2px solid ${habit.color}`
                         }}
+                        animate={habit.completed ? { scale: [1, 1.2, 1] } : {}}
+                        transition={{ duration: 0.3 }}
                       >
                         {habit.completed && <CheckCircle2 className="w-3.5 h-3.5 text-white" />}
-                      </div>
+                      </motion.div>
                       <span
                         className={`font-body flex-1 transition-all ${habit.completed ? 'line-through opacity-40' : ''}`}
                         style={{ color: 'var(--dashboard-text)' }}
@@ -389,9 +572,14 @@ const Dashboard = () => {
                         {habit.name}
                       </span>
                       {habit.completed && (
-                        <span className="text-xs px-2 py-0.5 rounded-full font-body" style={{ backgroundColor: `${habit.color}15`, color: habit.color }}>
+                        <motion.span 
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          className="text-xs px-2 py-0.5 rounded-full font-body" 
+                          style={{ backgroundColor: `${habit.color}15`, color: habit.color }}
+                        >
                           Done
-                        </span>
+                        </motion.span>
                       )}
                     </motion.div>
                   ))
@@ -411,7 +599,7 @@ const Dashboard = () => {
                 <div className="flex items-center justify-between">
                   <CardTitle className="font-heading text-lg flex items-center gap-2" style={{ color: 'var(--dashboard-text)' }}>
                     <div className="w-8 h-8 rounded-full flex items-center justify-center"
-                      style={{ backgroundColor: 'var(--gold-accent)15' }}>
+                      style={{ backgroundColor: 'rgba(201, 169, 110, 0.1)' }}>
                       <Sparkles className="w-4 h-4" style={{ color: 'var(--gold-accent)' }} />
                     </div>
                     Today's Tasks
@@ -447,9 +635,11 @@ const Dashboard = () => {
                         <motion.div
                           key={task.task_id}
                           data-testid={`priority-task-${task.task_id}`}
-                          className="flex items-center gap-3 py-2.5 px-3 rounded-xl hover:bg-black/[0.03] cursor-pointer group"
+                          className="flex items-center gap-3 py-2.5 px-3 rounded-xl cursor-pointer group"
                           onClick={() => handleToggleTask(task)}
                           whileTap={{ scale: 0.98 }}
+                          style={{ backgroundColor: 'transparent' }}
+                          whileHover={{ backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)' }}
                         >
                           <div className="w-6 h-6 rounded-lg border-2 flex items-center justify-center"
                             style={{ borderColor: color }}>
@@ -465,7 +655,7 @@ const Dashboard = () => {
                       );
                     })}
                     {completedTasks > 0 && (
-                      <div className="pt-2 mt-2 border-t border-black/5">
+                      <div className="pt-2 mt-2" style={{ borderTop: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)'}` }}>
                         <p className="text-xs font-body px-3 py-1" style={{ color: 'var(--dashboard-text)', opacity: 0.35 }}>
                           ✓ {completedTasks} task{completedTasks > 1 ? 's' : ''} completed today
                         </p>
@@ -492,7 +682,7 @@ const Dashboard = () => {
                   </span>
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-5 gap-6">
-                  <StatItem icon={<Flame className="w-5 h-5" />} label="Best Streak" value={stats?.habits_streak || 0} suffix="days" highlight />
+                  <StatItem icon={<Flame className="w-5 h-5" />} label="Best Streak" value={stats?.habits_streak || 0} suffix=" days" highlight />
                   <StatItem icon={<Link2 className="w-5 h-5" />} label="Links" value={stats?.links_saved || 0} />
                   <StatItem icon={<BookOpen className="w-5 h-5" />} label="Words" value={stats?.words_collected || 0} />
                   <StatItem icon={<Lightbulb className="w-5 h-5" />} label="Ideas" value={stats?.ideas_captured || 0} />
@@ -529,11 +719,14 @@ const Dashboard = () => {
                   return (
                     <motion.button
                       key={action.label}
-                      whileHover={{ scale: 1.03 }}
+                      whileHover={{ scale: 1.05, y: -2 }}
                       whileTap={{ scale: 0.95 }}
                       onClick={() => navigate(action.path)}
                       className="flex items-center gap-2 p-3 rounded-xl hover:shadow-md transition-all text-left"
-                      style={{ backgroundColor: `${action.color}08`, border: `1px solid ${action.color}15` }}
+                      style={{ 
+                        backgroundColor: isDark ? `${action.color}10` : `${action.color}08`, 
+                        border: `1px solid ${isDark ? `${action.color}20` : `${action.color}15`}` 
+                      }}
                     >
                       <div className="w-8 h-8 rounded-lg flex items-center justify-center"
                         style={{ backgroundColor: `${action.color}15` }}>
@@ -577,7 +770,8 @@ const Dashboard = () => {
                           initial={{ opacity: 0, x: -10 }}
                           animate={{ opacity: 1, x: 0 }}
                           transition={{ duration: 0.3, delay: 0.3 + index * 0.03 }}
-                          className="flex items-start gap-3 py-2.5 px-2 rounded-lg hover:bg-black/[0.02] transition-colors"
+                          className="flex items-start gap-3 py-2.5 px-2 rounded-lg transition-colors"
+                          style={{ backgroundColor: 'transparent' }}
                         >
                           <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
                             style={{ backgroundColor: `${activity.color}15` }}>
@@ -614,7 +808,7 @@ const Dashboard = () => {
   );
 };
 
-const StatItem = ({ icon, label, value, suffix, highlight }) => (
+const StatItem = ({ icon, label, value, suffix = "", highlight }) => (
   <div className="text-center">
     <div
       className="w-10 h-10 rounded-full mx-auto mb-2 flex items-center justify-center"
@@ -626,7 +820,7 @@ const StatItem = ({ icon, label, value, suffix, highlight }) => (
       {icon}
     </div>
     <p className="font-heading text-2xl" style={{ color: 'var(--dashboard-text)' }}>
-      {value}
+      <AnimatedCounter value={value} duration={1200} />
       {suffix && <span className="text-xs ml-1 opacity-50">{suffix}</span>}
     </p>
     <p className="text-xs font-body" style={{ color: 'var(--dashboard-text)', opacity: 0.45 }}>{label}</p>
