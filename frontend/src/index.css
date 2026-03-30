@@ -201,7 +201,6 @@ h1, h2, h3, h4, h5, h6, .heading {
 
 .nucleus-card:hover {
   box-shadow: 0 8px 30px var(--card-hover-shadow);
-  transform: translateY(-1px);
 }
 
 /* Dark card for BQ Practice */
@@ -392,11 +391,9 @@ h1, h2, h3, h4, h5, h6, .heading {
   scrollbar-width: none;
 }
 
-/* Dark mode transitions */
-* {
-  transition-property: background-color, border-color, color;
-  transition-duration: 0.2s;
-  transition-timing-function: ease;
+/* Dark mode transitions - only on body to avoid interfering with dropdowns */
+body {
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 /* Override transitions for animations */
