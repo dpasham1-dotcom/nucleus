@@ -1,14 +1,12 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useAuth, API } from "@/App";
 import { useTheme } from "@/App";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { format } from "date-fns";
-import { motion } from "framer-motion";
+import { motion, useScroll, useTransform } from "framer-motion";
+import { useRef } from "react";
 import {
-  Sun,
-  Moon,
-  Sunset,
   Target,
   Calendar,
   Link2,
@@ -16,399 +14,370 @@ import {
   Lightbulb,
   UtensilsCrossed,
   MessageSquare,
-  Flame,
   ArrowRight,
   Sparkles,
-  TrendingUp,
-  ChevronRight,
-  BarChart3
+  Brain,
+  Zap,
+  Shield,
+  BarChart3,
+  Flame,
+  ChevronDown
 } from "lucide-react";
-import { Input } from "@/components/ui/input";
-
-const QUOTES = [
-  "The secret of getting ahead is getting started.",
-  "Small daily improvements lead to stunning results.",
-  "What you do today can improve all your tomorrows.",
-  "Focus on being productive instead of busy.",
-  "Success is the sum of small efforts repeated daily.",
-  "Don't watch the clock; do what it does. Keep going.",
-  "The only way to do great work is to love what you do.",
-  "Your future self will thank you for the work you put in today.",
-  "Discipline is choosing between what you want now and what you want most.",
-  "Progress, not perfection.",
-  "You don't have to be extreme, just consistent.",
-  "The best time to start was yesterday. The next best time is now.",
-  "A year from now you'll wish you had started today."
-];
 
 const MODULES = [
-  { 
-    key: "habits", icon: Target, label: "Habit Tracker", 
-    desc: "Build your streak", path: "/habits",
-    gradient: ["#7C9A6E", "#5A7A4E"], emoji: "🎯"
-  },
-  { 
-    key: "planner", icon: Calendar, label: "Daily Planner", 
-    desc: "Own your day", path: "/planner",
-    gradient: ["#C9A96E", "#A88A4E"], emoji: "📅"
-  },
-  { 
-    key: "calories", icon: UtensilsCrossed, label: "Calorie Tracker", 
-    desc: "Fuel your body", path: "/calories",
-    gradient: ["#2D9A6A", "#1D7A5A"], emoji: "🍽"
-  },
-  { 
-    key: "vocabulary", icon: BookOpen, label: "Vocabulary", 
-    desc: "Expand your mind", path: "/vocabulary",
-    gradient: ["#8A3D2C", "#6A2D1C"], emoji: "📖"
-  },
-  { 
-    key: "ideas", icon: Lightbulb, label: "Ideas", 
-    desc: "Capture everything", path: "/ideas",
-    gradient: ["#F59E0B", "#D97706"], emoji: "💡"
-  },
-  { 
-    key: "links", icon: Link2, label: "Link Vault", 
-    desc: "Your knowledge base", path: "/links",
-    gradient: ["#3D5A7A", "#2D4A6A"], emoji: "🔗"
-  },
-  { 
-    key: "bq", icon: MessageSquare, label: "BQ Practice", 
-    desc: "Ace every interview", path: "/bq-practice",
-    gradient: ["#607D8B", "#455A64"], emoji: "🎤"
+  {
+    icon: Target, label: "Habit Tracker",
+    desc: "Track daily habits with a 90-day visual grid. Build streaks, earn milestones, and watch discipline compound over time.",
+    path: "/habits", gradient: ["#7C9A6E", "#5A7A4E"],
+    features: ["90-day visual grid", "Streak tracking", "Milestone badges", "Freeze days"]
   },
   {
-    key: "dashboard", icon: BarChart3, label: "Dashboard",
-    desc: "See your full picture", path: "/dashboard",
-    gradient: ["#9A7A9A", "#7A5A7A"], emoji: "📊"
+    icon: Calendar, label: "Daily Planner",
+    desc: "Organize your day with the Eisenhower Matrix. Prioritize what matters, time-block your schedule, and use Pomodoro flow.",
+    path: "/planner", gradient: ["#C9A96E", "#A88A4E"],
+    features: ["Eisenhower Matrix", "Pomodoro timer", "Priority sorting", "Time estimation"]
+  },
+  {
+    icon: UtensilsCrossed, label: "Calorie Tracker",
+    desc: "Log meals with AI-powered calorie estimation. Track macros, monitor weight trends, and build nutrition awareness.",
+    path: "/calories", gradient: ["#2D9A6A", "#1D7A5A"],
+    features: ["AI meal estimation", "Macro tracking", "Weight charting", "Daily goals"]
+  },
+  {
+    icon: BookOpen, label: "Vocabulary",
+    desc: "Build your word mastery. AI generates definitions and examples. Track new words from unfamiliar to fully owned.",
+    path: "/vocabulary", gradient: ["#8A3D2C", "#6A2D1C"],
+    features: ["AI definitions", "Mastery levels", "Notes & context", "Text-to-speech"]
+  },
+  {
+    icon: Lightbulb, label: "Ideas Notepad",
+    desc: "Capture raw thoughts and let AI help you expand them. Organize ideas across stages from brainstorm to shipped.",
+    path: "/ideas", gradient: ["#F59E0B", "#D97706"],
+    features: ["AI expansion", "Kanban stages", "Quick capture", "Tag system"]
+  },
+  {
+    icon: Link2, label: "Link Vault",
+    desc: "Save and categorize articles, resources, job leads, and inspiration. Your personal knowledge library.",
+    path: "/links", gradient: ["#3D5A7A", "#2D4A6A"],
+    features: ["Category tags", "Job tracking", "Career pages", "Quick save"]
+  },
+  {
+    icon: MessageSquare, label: "BQ Practice",
+    desc: "Prepare for behavioral interviews using the STAR method. Get AI feedback on your responses and track your progress.",
+    path: "/bq-practice", gradient: ["#607D8B", "#455A64"],
+    features: ["STAR method", "AI feedback", "Practice sessions", "Response library"]
+  },
+  {
+    icon: BarChart3, label: "Dashboard",
+    desc: "Your analytics command center. See all module stats, track progress, and get a productivity score for the day.",
+    path: "/dashboard", gradient: ["#9A7A9A", "#7A5A7A"],
+    features: ["Productivity score", "Progress ring", "Activity feed", "Smart insights"]
   }
+];
+
+const PILLARS = [
+  { icon: Brain, title: "Your Second Brain", desc: "Capture ideas, vocabulary, and links. Nothing slips through the cracks." },
+  { icon: Zap, title: "Daily Engine", desc: "Plan tasks, track habits, and log meals — all in one flow, every single day." },
+  { icon: Shield, title: "Private & Yours", desc: "Your data, your control. Export anytime. No ads, no tracking, no selling." },
+  { icon: Sparkles, title: "AI Augmented", desc: "Smart calorie estimation, vocabulary definitions, idea expansion, and weekly reviews." },
 ];
 
 const Home = () => {
   const { user } = useAuth();
   const { isDark } = useTheme();
   const navigate = useNavigate();
-  const [intention, setIntention] = useState("");
-  const [stats, setStats] = useState(null);
-  const [summary, setSummary] = useState(null);
-  const [quote] = useState(() => QUOTES[Math.floor(Math.random() * QUOTES.length)]);
-
-  const today = format(new Date(), "yyyy-MM-dd");
-
-  function getGreeting() {
-    const hour = new Date().getHours();
-    if (hour < 12) return { text: "Good morning", icon: Sun, period: "morning" };
-    if (hour < 17) return { text: "Good afternoon", icon: Sunset, period: "afternoon" };
-    return { text: "Good evening", icon: Moon, period: "evening" };
-  }
-
-  const greeting = getGreeting();
-  const GreetingIcon = greeting.icon;
-
-  useEffect(() => {
-    fetchData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const fetchData = async () => {
-    try {
-      const [intentionRes, statsRes, summaryRes] = await Promise.all([
-        axios.get(`${API}/intention/${today}`, { withCredentials: true }).catch(() => ({ data: {} })),
-        axios.get(`${API}/stats`, { withCredentials: true }).catch(() => ({ data: {} })),
-        axios.get(`${API}/dashboard-summary`, { withCredentials: true }).catch(() => ({ data: null }))
-      ]);
-      setIntention(intentionRes.data.intention || "");
-      setStats(statsRes.data);
-      setSummary(summaryRes.data);
-    } catch (error) {
-      console.error("Error fetching home data:", error);
-    }
-  };
-
-  const handleIntentionChange = async (value) => {
-    setIntention(value);
-    try {
-      await axios.put(`${API}/intention/${today}`, { intention: value }, { withCredentials: true });
-    } catch (error) {
-      console.error("Error saving intention:", error);
-    }
-  };
-
-  // Get a quick stat for a module
-  const getModuleStat = (key) => {
-    if (!summary?.modules) return null;
-    const mod = summary.modules;
-    switch (key) {
-      case "habits":
-        return mod.habits ? `${mod.habits.completed_today || 0}/${mod.habits.total || 0} today` : null;
-      case "planner":
-        return mod.tasks ? `${mod.tasks.completed_today || 0} done` : null;
-      case "calories":
-        return mod.calories ? `${mod.calories.total_today || 0} kcal` : null;
-      case "vocabulary":
-        return mod.vocabulary ? `${mod.vocabulary.total || 0} words` : null;
-      case "ideas":
-        return mod.ideas ? `${mod.ideas.total || 0} captured` : null;
-      case "links":
-        return mod.links ? `${mod.links.total || 0} saved` : null;
-      default:
-        return null;
-    }
-  };
-
-  // Day progress (rough % of waking hours 6am-11pm)
-  const getDayProgress = () => {
-    const now = new Date();
-    const hours = now.getHours() + now.getMinutes() / 60;
-    const wakeStart = 6, wakeEnd = 23;
-    if (hours < wakeStart) return 0;
-    if (hours > wakeEnd) return 100;
-    return Math.round(((hours - wakeStart) / (wakeEnd - wakeStart)) * 100);
-  };
-
-  const dayProgress = getDayProgress();
+  const containerRef = useRef(null);
+  const { scrollYProgress } = useScroll();
+  const heroImageY = useTransform(scrollYProgress, [0, 0.3], [0, -80]);
+  const heroOpacity = useTransform(scrollYProgress, [0, 0.2], [1, 0.3]);
 
   return (
     <div
+      ref={containerRef}
       data-testid="home-page"
       className="min-h-screen"
-      style={{ backgroundColor: 'var(--dashboard-bg)' }}
+      style={{ backgroundColor: '#0A0A0A' }}
     >
-      {/* ═══════════════ HERO SECTION ═══════════════ */}
-      <div className="relative overflow-hidden">
-        {/* Ambient gradient orbs */}
-        <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          <motion.div
-            className="absolute -top-40 -right-40 w-[600px] h-[600px] rounded-full"
-            style={{
-              background: isDark
-                ? 'radial-gradient(circle, rgba(201, 169, 110, 0.06), transparent 70%)'
-                : 'radial-gradient(circle, rgba(201, 169, 110, 0.08), transparent 70%)'
-            }}
-            animate={{ scale: [1, 1.1, 1], x: [0, 20, 0] }}
-            transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
+      {/* ═══════════════ HERO ═══════════════ */}
+      <div className="relative min-h-[100vh] flex items-center justify-center overflow-hidden">
+        {/* Hero background image */}
+        <motion.div
+          className="absolute inset-0 z-0"
+          style={{ y: heroImageY, opacity: heroOpacity }}
+        >
+          <img
+            src="/images/nucleus-hero.png"
+            alt=""
+            className="w-full h-full object-cover"
+            style={{ filter: 'brightness(0.4)' }}
           />
-          <motion.div
-            className="absolute bottom-0 -left-40 w-[500px] h-[500px] rounded-full"
-            style={{
-              background: isDark
-                ? 'radial-gradient(circle, rgba(124, 154, 110, 0.05), transparent 70%)'
-                : 'radial-gradient(circle, rgba(124, 154, 110, 0.06), transparent 70%)'
-            }}
-            animate={{ scale: [1, 1.15, 1], y: [0, -15, 0] }}
-            transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
-          />
-        </div>
+          {/* Gradient overlay */}
+          <div className="absolute inset-0" style={{
+            background: 'linear-gradient(180deg, rgba(10,10,10,0.3) 0%, rgba(10,10,10,0.6) 50%, rgba(10,10,10,1) 100%)'
+          }} />
+        </motion.div>
 
-        <div className="relative z-10 px-6 md:px-12 pt-12 pb-6 max-w-6xl mx-auto">
-          {/* Date pill */}
+        {/* Hero content */}
+        <div className="relative z-10 text-center px-6 max-w-4xl mx-auto">
           <motion.div
-            initial={{ opacity: 0, y: 15 }}
+            initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="flex items-center gap-2 mb-6"
+            transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
           >
-            <div className="flex items-center gap-2 px-4 py-2 rounded-full"
-              style={{
-                backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)',
-              }}>
-              <GreetingIcon className="w-4 h-4" style={{ color: 'var(--gold-accent)' }} />
-              <span className="text-sm font-body font-medium" style={{ color: 'var(--dashboard-text)', opacity: 0.6 }}>
-                {format(new Date(), "EEEE, MMMM d")}
-              </span>
-            </div>
-
-            {/* Day progress pill */}
-            <div className="flex items-center gap-2 px-3 py-2 rounded-full"
-              style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)' }}>
-              <div className="w-16 h-1.5 rounded-full overflow-hidden" 
-                style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }}>
-                <motion.div
-                  className="h-full rounded-full"
-                  style={{ backgroundColor: 'var(--gold-accent)' }}
-                  initial={{ width: 0 }}
-                  animate={{ width: `${dayProgress}%` }}
-                  transition={{ duration: 1.5, delay: 0.5 }}
-                />
+            {/* Small logo */}
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="mb-8 inline-flex items-center gap-3"
+            >
+              <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-white font-heading text-2xl"
+                style={{ background: 'linear-gradient(135deg, #C9A96E, #E8D5A3)', boxShadow: '0 0 40px rgba(201, 169, 110, 0.3)' }}>
+                N
               </div>
-              <span className="text-xs font-body opacity-40">{dayProgress}% of day</span>
-            </div>
-          </motion.div>
+            </motion.div>
 
-          {/* Big greeting */}
-          <motion.div
-            initial={{ opacity: 0, y: 25 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
-          >
-            <h1 className="font-heading text-5xl md:text-6xl lg:text-7xl mb-3 leading-tight"
-              style={{ color: 'var(--dashboard-text)' }}>
-              {greeting.text},
-              <br />
-              <span className="gradient-text">{user?.name?.split(' ')[0] || 'there'}</span>
-            </h1>
-          </motion.div>
-
-          {/* Quote */}
-          <motion.p
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.3 }}
-            className="font-body text-lg md:text-xl italic max-w-xl mb-10"
-            style={{ color: 'var(--dashboard-text)', opacity: 0.35 }}
-          >
-            "{quote}"
-          </motion.p>
-
-          {/* Intention */}
-          <motion.div
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.4 }}
-            className="max-w-xl mb-4"
-          >
-            <div className="flex items-center gap-2 mb-3">
-              <Sparkles className="w-4 h-4" style={{ color: 'var(--gold-accent)' }} />
-              <span className="text-xs font-body uppercase tracking-widest font-semibold" style={{ color: 'var(--gold-accent)' }}>
-                Today's Intention
+            <h1 className="font-heading text-6xl md:text-7xl lg:text-8xl mb-6 text-white leading-[0.9]">
+              Your{' '}
+              <span style={{
+                background: 'linear-gradient(135deg, #C9A96E, #E8D5A3, #C9A96E)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text'
+              }}>
+                Second Brain
               </span>
-            </div>
-            <Input
-              data-testid="home-intention-input"
-              placeholder="What's your one focus for today?"
-              value={intention}
-              onChange={(e) => handleIntentionChange(e.target.value)}
-              className="border-0 bg-transparent text-2xl md:text-3xl font-heading placeholder:opacity-20 focus-visible:ring-0 p-0 h-auto"
-              style={{ color: 'var(--dashboard-text)' }}
-            />
-            <div className="w-16 h-0.5 mt-4 rounded-full" style={{ backgroundColor: 'var(--gold-accent)', opacity: 0.3 }} />
+            </h1>
+
+            <p className="font-body text-xl md:text-2xl text-white/50 max-w-2xl mx-auto mb-4">
+              One command center for your habits, tasks, ideas, nutrition, vocabulary, and career growth.
+            </p>
+
+            <p className="font-body text-sm text-white/25 max-w-lg mx-auto mb-12">
+              Nucleus brings everything into a single, beautiful system — so you can stop switching between 10 apps and start building the life you want.
+            </p>
+
+            <motion.button
+              onClick={() => navigate('/dashboard')}
+              whileHover={{ scale: 1.03, boxShadow: '0 0 50px rgba(201, 169, 110, 0.25)' }}
+              whileTap={{ scale: 0.97 }}
+              className="py-4 px-10 rounded-full font-body font-medium text-lg inline-flex items-center gap-3"
+              style={{
+                background: 'linear-gradient(135deg, #C9A96E, #E8D5A3)',
+                color: '#0A0A0A'
+              }}
+            >
+              Enter Command Center
+              <ArrowRight className="w-5 h-5" />
+            </motion.button>
           </motion.div>
         </div>
-      </div>
 
-      {/* ═══════════════ QUICK STATS STRIP ═══════════════ */}
-      {stats && (
+        {/* Scroll indicator */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ duration: 0.5, delay: 0.5 }}
-          className="px-6 md:px-12 max-w-6xl mx-auto mb-10"
+          transition={{ delay: 2 }}
+          className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2"
         >
-          <div className="flex items-center gap-6 md:gap-10 py-4 overflow-x-auto hide-scrollbar">
-            {[
-              { icon: Flame, label: "Streak", value: stats.habits_streak || 0, unit: "days", color: "#D97706" },
-              { icon: Target, label: "Habits Built", value: stats.total_habits || 0, unit: "", color: "#7C9A6E" },
-              { icon: BookOpen, label: "Words Learned", value: stats.words_collected || 0, unit: "", color: "#8A3D2C" },
-              { icon: TrendingUp, label: "Tasks Done", value: stats.tasks_completed || 0, unit: "", color: "#C9A96E" },
-            ].map((stat, i) => {
-              const Icon = stat.icon;
+          <span className="text-xs font-body text-white/20 uppercase tracking-widest">Explore</span>
+          <motion.div
+            animate={{ y: [0, 8, 0] }}
+            transition={{ duration: 2, repeat: Infinity }}
+          >
+            <ChevronDown className="w-5 h-5 text-white/20" />
+          </motion.div>
+        </motion.div>
+      </div>
+
+      {/* ═══════════════ WHAT IS NUCLEUS ═══════════════ */}
+      <div className="py-32 px-6 relative" style={{ backgroundColor: '#0A0A0A' }}>
+        <div className="max-w-5xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 0.8 }}
+            className="text-center mb-20"
+          >
+            <p className="text-xs font-body uppercase tracking-[0.3em] mb-4" style={{ color: '#C9A96E' }}>
+              The Philosophy
+            </p>
+            <h2 className="font-heading text-4xl md:text-5xl text-white mb-6">
+              Stop managing.{' '}
+              <span className="text-white/30">Start building.</span>
+            </h2>
+            <p className="font-body text-lg text-white/40 max-w-2xl mx-auto">
+              Most productivity tools make you feel busy. Nucleus makes you feel{' '}
+              <span className="text-white/70 font-medium">intentional</span>.
+              Every module is designed to compound — habits build streaks, ideas become projects,
+              vocabulary becomes fluency.
+            </p>
+          </motion.div>
+
+          {/* Pillars */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {PILLARS.map((pillar, index) => {
+              const Icon = pillar.icon;
               return (
                 <motion.div
-                  key={stat.label}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.6 + i * 0.08 }}
-                  className="flex items-center gap-3 flex-shrink-0"
+                  key={pillar.title}
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5, delay: index * 0.1 }}
+                  className="p-6 rounded-2xl border"
+                  style={{
+                    backgroundColor: 'rgba(255,255,255,0.02)',
+                    borderColor: 'rgba(255,255,255,0.06)'
+                  }}
                 >
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center"
-                    style={{ backgroundColor: `${stat.color}12` }}>
-                    <Icon className="w-5 h-5" style={{ color: stat.color }} />
+                  <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-4"
+                    style={{ backgroundColor: 'rgba(201, 169, 110, 0.1)' }}>
+                    <Icon className="w-6 h-6" style={{ color: '#C9A96E' }} />
                   </div>
-                  <div>
-                    <p className="font-heading text-xl leading-none" style={{ color: 'var(--dashboard-text)' }}>
-                      {stat.value}
-                      {stat.unit && <span className="text-xs ml-1 opacity-50 font-body">{stat.unit}</span>}
-                    </p>
-                    <p className="text-[10px] font-body uppercase tracking-wider opacity-40">{stat.label}</p>
+                  <h3 className="font-heading text-lg text-white mb-2">{pillar.title}</h3>
+                  <p className="font-body text-sm text-white/35 leading-relaxed">{pillar.desc}</p>
+                </motion.div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* ═══════════════ MODULE SHOWCASE ═══════════════ */}
+      <div className="py-32 px-6" style={{ backgroundColor: '#0A0A0A' }}>
+        <div className="max-w-6xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 0.6 }}
+            className="text-center mb-16"
+          >
+            <p className="text-xs font-body uppercase tracking-[0.3em] mb-4" style={{ color: '#C9A96E' }}>
+              8 Integrated Modules
+            </p>
+            <h2 className="font-heading text-4xl md:text-5xl text-white mb-4">
+              Everything connects.
+            </h2>
+            <p className="font-body text-lg text-white/35 max-w-xl mx-auto">
+              Each module is a tool. Together, they're a system.
+            </p>
+          </motion.div>
+
+          {/* Module Cards - Alternating layout */}
+          <div className="space-y-6">
+            {MODULES.map((mod, index) => {
+              const Icon = mod.icon;
+              const isEven = index % 2 === 0;
+
+              return (
+                <motion.div
+                  key={mod.label}
+                  initial={{ opacity: 0, x: isEven ? -30 : 30 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true, margin: "-50px" }}
+                  transition={{ duration: 0.6, delay: 0.1 }}
+                  whileHover={{ scale: 1.01 }}
+                  onClick={() => navigate(mod.path)}
+                  className="group cursor-pointer rounded-2xl overflow-hidden relative"
+                  style={{
+                    background: `linear-gradient(${isEven ? '135deg' : '225deg'}, ${mod.gradient[0]}15, transparent 60%)`,
+                    border: '1px solid rgba(255,255,255,0.06)'
+                  }}
+                >
+                  <div className={`flex flex-col md:flex-row ${!isEven ? 'md:flex-row-reverse' : ''} items-center gap-6 p-8`}>
+                    {/* Icon Side */}
+                    <div className="flex-shrink-0">
+                      <div className="w-20 h-20 rounded-2xl flex items-center justify-center"
+                        style={{ background: `linear-gradient(135deg, ${mod.gradient[0]}, ${mod.gradient[1]})` }}>
+                        <Icon className="w-10 h-10 text-white" />
+                      </div>
+                    </div>
+
+                    {/* Content */}
+                    <div className="flex-1 text-center md:text-left">
+                      <h3 className="font-heading text-2xl text-white mb-2 group-hover:text-white/90 transition-colors">
+                        {mod.label}
+                      </h3>
+                      <p className="font-body text-sm text-white/40 mb-4 max-w-lg leading-relaxed">
+                        {mod.desc}
+                      </p>
+                      <div className="flex flex-wrap gap-2 justify-center md:justify-start">
+                        {mod.features.map((feat) => (
+                          <span key={feat} className="text-xs font-body px-3 py-1 rounded-full"
+                            style={{
+                              backgroundColor: `${mod.gradient[0]}15`,
+                              color: mod.gradient[0],
+                              border: `1px solid ${mod.gradient[0]}25`
+                            }}>
+                            {feat}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Arrow */}
+                    <div className="flex-shrink-0 hidden md:flex">
+                      <div className="w-12 h-12 rounded-full border flex items-center justify-center group-hover:bg-white/5 transition-all"
+                        style={{ borderColor: 'rgba(255,255,255,0.1)' }}>
+                        <ArrowRight className="w-5 h-5 text-white/30 group-hover:text-white/60 group-hover:translate-x-0.5 transition-all" />
+                      </div>
+                    </div>
                   </div>
                 </motion.div>
               );
             })}
           </div>
-        </motion.div>
-      )}
-
-      {/* ═══════════════ MODULE GRID ═══════════════ */}
-      <div className="px-6 md:px-12 max-w-6xl mx-auto pb-16">
-        <motion.div
-          initial={{ opacity: 0, y: 15 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.5 }}
-          className="flex items-center justify-between mb-6"
-        >
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-body uppercase tracking-widest font-semibold" style={{ color: 'var(--gold-accent)' }}>
-              Your Modules
-            </span>
-          </div>
-        </motion.div>
-
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {MODULES.map((mod, index) => {
-            const Icon = mod.icon;
-            const stat = getModuleStat(mod.key);
-
-            return (
-              <motion.button
-                key={mod.key}
-                data-testid={`home-module-${mod.key}`}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: 0.55 + index * 0.06 }}
-                whileHover={{ y: -6, scale: 1.02 }}
-                whileTap={{ scale: 0.97 }}
-                onClick={() => navigate(mod.path)}
-                className="relative group rounded-2xl p-6 text-left overflow-hidden"
-                style={{
-                  background: `linear-gradient(145deg, ${mod.gradient[0]}, ${mod.gradient[1]})`,
-                  minHeight: '160px'
-                }}
-              >
-                {/* Shine overlay on hover */}
-                <div className="absolute inset-0 bg-gradient-to-br from-white/0 via-white/0 to-white/0 group-hover:from-white/10 group-hover:via-white/5 group-hover:to-white/0 transition-all duration-500 rounded-2xl" />
-                
-                <div className="relative z-10 flex flex-col h-full justify-between">
-                  <div>
-                    <div className="w-11 h-11 rounded-xl bg-white/15 flex items-center justify-center mb-4 backdrop-blur-sm">
-                      <Icon className="w-5 h-5 text-white" />
-                    </div>
-                    <h3 className="font-heading text-lg text-white leading-tight mb-1">
-                      {mod.label}
-                    </h3>
-                    <p className="text-xs font-body text-white/60">
-                      {mod.desc}
-                    </p>
-                  </div>
-
-                  <div className="flex items-center justify-between mt-4">
-                    {stat && (
-                      <span className="text-xs font-body text-white/70 bg-white/10 px-2.5 py-1 rounded-full">
-                        {stat}
-                      </span>
-                    )}
-                    <div className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center ml-auto group-hover:bg-white/20 transition-colors">
-                      <ArrowRight className="w-3.5 h-3.5 text-white/80" />
-                    </div>
-                  </div>
-                </div>
-              </motion.button>
-            );
-          })}
         </div>
       </div>
 
-      {/* ═══════════════ FOOTER TAGLINE ═══════════════ */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 1.2 }}
-        className="text-center pb-12 px-6"
-      >
-        <div className="w-8 h-0.5 mx-auto mb-4 rounded-full" style={{ backgroundColor: 'var(--gold-accent)', opacity: 0.2 }} />
-        <p className="text-xs font-body" style={{ color: 'var(--dashboard-text)', opacity: 0.2 }}>
-          Nucleus — Your personal command center
+      {/* ═══════════════ CTA ═══════════════ */}
+      <div className="py-32 px-6 relative" style={{ backgroundColor: '#0A0A0A' }}>
+        {/* Ambient glow */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full pointer-events-none"
+          style={{ background: 'radial-gradient(circle, rgba(201, 169, 110, 0.06), transparent 70%)' }} />
+
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.8 }}
+          className="relative z-10 max-w-2xl mx-auto text-center"
+        >
+          <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-white font-heading text-3xl mx-auto mb-8"
+            style={{ background: 'linear-gradient(135deg, #C9A96E, #E8D5A3)', boxShadow: '0 0 50px rgba(201, 169, 110, 0.2)' }}>
+            N
+          </div>
+          <h2 className="font-heading text-3xl md:text-4xl text-white mb-4">
+            Ready to build your system?
+          </h2>
+          <p className="font-body text-lg text-white/35 mb-10">
+            Your future self will thank you for starting today.
+          </p>
+          <motion.button
+            onClick={() => navigate('/dashboard')}
+            whileHover={{ scale: 1.03, boxShadow: '0 0 50px rgba(201, 169, 110, 0.3)' }}
+            whileTap={{ scale: 0.97 }}
+            className="py-4 px-12 rounded-full font-body font-medium text-lg inline-flex items-center gap-3"
+            style={{
+              background: 'linear-gradient(135deg, #C9A96E, #E8D5A3)',
+              color: '#0A0A0A'
+            }}
+          >
+            Enter Command Center
+            <ArrowRight className="w-5 h-5" />
+          </motion.button>
+        </motion.div>
+      </div>
+
+      {/* ═══════════════ FOOTER ═══════════════ */}
+      <div className="py-8 px-6 text-center" style={{ borderTop: '1px solid rgba(255,255,255,0.04)', backgroundColor: '#0A0A0A' }}>
+        <p className="text-xs font-body text-white/15">
+          Nucleus — Your personal command center & second brain
         </p>
-      </motion.div>
+      </div>
     </div>
   );
 };
